@@ -4,6 +4,33 @@
 // Copyright (c) 2025 Alexander Bazhanov
 // ------------------------------------------------------------------------
 
+let userLang = (navigator.language || navigator.userLanguage) === 'ru' ? 'ru' : 'en';
+
+const l10n = {
+    "match3Game": {
+        "ru": "ТРИ В РЯД!",
+        "en": "Match 3 Game"
+    },
+    "newGame": {
+        "ru": "Новая игра",
+        "en": "New game"
+    },
+    "aiBot": {
+        "ru": "ИИ-бот",
+        "en": "AI-bot"
+    },
+    "showMoves": {
+        "ru": "Возможные ходы",
+        "en": "Possible moves"
+    },
+    "gameOver": {
+        "ru": "Конец игры",
+        "en": "Game over"
+    },
+}
+
+document.title = l10n.match3Game[userLang];
+
 // The function gets called when the window is fully loaded
 window.onload = function () {
     let newGameButton = document.getElementById("new-game-button");
@@ -12,6 +39,11 @@ window.onload = function () {
     let scoreCounter = document.querySelector('.score-counter');
     let bestScoreSpan = document.querySelector('.best-score > span');
     let statistics = document.querySelector('.statistics');
+
+    // Translate buttons
+    newGameButton.innerHTML = l10n.newGame[userLang];
+    autoPlayButton.innerHTML = l10n.aiBot[userLang];
+    showMovesButton.innerHTML = l10n.showMoves[userLang];
 
     // Get the canvas and context
     let canvas = document.getElementById("viewport");
@@ -46,7 +78,7 @@ window.onload = function () {
         {color: "#139DF5", radii: [36, 36, 0, 36]},
         {color: "#4ECC2C", radii: [36, 36, 36, 0]},
         {color: "#FED204", radii: [36, 36, 36, 36]},
-        //{color: "#FDA811", radii: [36, 0, 36, 0]},
+        {color: "#FDA811", radii: [36, 0, 36, 0]},
         //{color: "#AEADAB", radii: [18, 18, 18, 18]}
     ]
     let bgColor = {color: "rgb(245, 245, 247)", radii: [0, 0, 0, 0]}
@@ -96,8 +128,7 @@ window.onload = function () {
 
     // Initialize the game
     function init() {
-        // Add mouse events
-
+        // Add mouse and touch events
         if (clickType === 'click') {
             canvas.addEventListener("mousemove", onMouseMove);
             canvas.addEventListener("mousedown", onMouseDown);
@@ -324,7 +355,7 @@ window.onload = function () {
 
     // Update moves
     function updateAiBot() {
-        autoPlayButton.innerHTML = 'ИИ-бот';
+        autoPlayButton.innerHTML = l10n.aiBot[userLang];
         if (aiBot) {
             autoPlayButton.classList.add('controllers-item__enabled');
         } else {
@@ -335,7 +366,7 @@ window.onload = function () {
     // Update moves
     function updateMoves() {
         if (gameState === 1) {
-            showMovesButton.innerHTML = 'Возможные ходы (' + moves.length + ')';
+            showMovesButton.innerHTML = l10n.showMoves[userLang] + ' (' + moves.length + ')';
             updateStats();
         }
         if (showMoves) {
