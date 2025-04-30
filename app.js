@@ -33,8 +33,6 @@ const l10n = {
     },
 }
 
-document.title = l10n.match3Game[userLang];
-
 // The function gets called when the window is fully loaded
 window.onload = function () {
     let newGameButton = document.getElementById("new-game-button");
@@ -1086,7 +1084,7 @@ window.onload = function () {
 
     // Translate buttons
     function updateTranslate() {
-        console.log(l10n)
+        document.title = l10n.match3Game[userLang];
         newGameButton.innerHTML = l10n.newGame[userLang];
         autoPlayButton.innerHTML = l10n.aiBot[userLang];
         changeLangButton.innerHTML = l10n.lang[userLang];
