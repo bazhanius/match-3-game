@@ -33,7 +33,7 @@ html, body {
     justify-content: center;
     align-content: center;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
 }
 
 .app-container, .app-container > canvas {
@@ -95,7 +95,7 @@ canvas {
 .controllers {
     width: 100%;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
 }
 
