@@ -4,7 +4,7 @@
 // Copyright (c) 2025 Alexander Bazhanov
 // ------------------------------------------------------------------------
 
-let userLang = (navigator.language || navigator.userLanguage) === 'ru' ? 'ru' : 'en';
+let userLang = (navigator.language || navigator.userLanguage).indexOf('ru') !== -1 ? 'ru' : 'en';
 
 const l10n = {
     "match3Game": {
@@ -23,6 +23,10 @@ const l10n = {
         "ru": "Возможные ходы",
         "en": "Possible moves"
     },
+    "lang": {
+        "ru": "English",
+        "en": "Русский"
+    },
     "gameOver": {
         "ru": "Конец игры",
         "en": "Game over"
@@ -35,15 +39,11 @@ document.title = l10n.match3Game[userLang];
 window.onload = function () {
     let newGameButton = document.getElementById("new-game-button");
     let autoPlayButton = document.getElementById("auto-play-button");
+    let changeLangButton = document.getElementById("change-lang-button");
     let showMovesButton = document.getElementById("show-move-button");
     let scoreCounter = document.querySelector('.score-counter');
     let bestScoreSpan = document.querySelector('.best-score > span');
     let statistics = document.querySelector('.statistics');
-
-    // Translate buttons
-    newGameButton.innerHTML = l10n.newGame[userLang];
-    autoPlayButton.innerHTML = l10n.aiBot[userLang];
-    showMovesButton.innerHTML = l10n.showMoves[userLang];
 
     // Get the canvas and context
     let canvas = document.getElementById("viewport");
@@ -1084,10 +1084,27 @@ window.onload = function () {
         };
     }
 
+    // Translate buttons
+    function updateTranslate() {
+        console.log(l10n)
+        newGameButton.innerHTML = l10n.newGame[userLang];
+        autoPlayButton.innerHTML = l10n.aiBot[userLang];
+        changeLangButton.innerHTML = l10n.lang[userLang];
+        if (moves && moves.length) {
+            showMovesButton.innerHTML = l10n.showMoves[userLang] + ' (' + moves.length + ')';
+        } else {
+            showMovesButton.innerHTML = l10n.showMoves[userLang];
+        }
+    }
+
+    updateTranslate();
+
     // Call init to start the game
     init();
 
     newGameButton.addEventListener('click', () => {
+        aiBot = false;
+        updateAiBot();
         newGame();
     })
 
@@ -1095,6 +1112,12 @@ window.onload = function () {
         showMoves = !showMoves;
         updateMoves();
     })
+
+    changeLangButton.addEventListener('click', () => {
+        userLang = userLang === 'ru' ? 'en' : 'ru';
+        updateTranslate();
+    })
+
     autoPlayButton.addEventListener('click', () => {
         aiBot = !aiBot;
         updateAiBot();
