@@ -20,8 +20,8 @@ const l10n = {
         "en": "AI-bot"
     },
     "showMoves": {
-        "ru": "Возможные ходы",
-        "en": "Possible moves"
+        "ru": "Ходы",
+        "en": "Moves"
     },
     "lang": {
         "ru": "English",
@@ -75,8 +75,8 @@ window.onload = function () {
         {color: "#BF61D6", radii: [36, 0, 36, 36]},
         {color: "#139DF5", radii: [36, 36, 0, 36]},
         {color: "#4ECC2C", radii: [36, 36, 36, 0]},
-        {color: "#FED204", radii: [36, 36, 36, 36]},
-        {color: "#FDA811", radii: [36, 0, 36, 0]},
+        {color: "#FED204", radii: [36, 0, 36, 0]},
+        {color: "#FDA811", radii: [36, 36, 36, 36]},
         //{color: "#AEADAB", radii: [18, 18, 18, 18]}
     ]
     let bgColor = {color: "rgb(245, 245, 247)", radii: [0, 0, 0, 0]}
@@ -305,8 +305,8 @@ window.onload = function () {
 
     // Draw text that is centered
     function drawCenterText(text, x, y, width) {
-        let textdim = context.measureText(text);
-        context.fillText(text, x + (width - textdim.width) / 2, y);
+        let textDim = context.measureText(text);
+        context.fillText(text, x + (width - textDim.width) / 2, y);
     }
 
     // Update score
@@ -364,7 +364,8 @@ window.onload = function () {
     // Update moves
     function updateMoves() {
         if (gameState === 1) {
-            showMovesButton.innerHTML = l10n.showMoves[userLang] + ' (' + moves.length + ')';
+            showMovesButton.innerHTML = l10n.showMoves[userLang];
+            document.body.style.setProperty("--moves-badge-counter","'" +  moves.length + "'");
             updateStats();
         }
         if (showMoves) {
@@ -376,29 +377,16 @@ window.onload = function () {
 
     // Render the game
     function render() {
-        // Draw the frame
-        drawFrame();
-
         // Draw score
-        //context.fillStyle = "#000000";
-        //context.font = "24px Verdana";
-        //drawCenterText("Score:", 30, level.y + 40, 150);
-        //drawCenterText(score.current, 30, level.y + 70, 150);
         if (score.current !== score.previous) {
             updateScore();
         }
-
-        // Draw buttons
-        //drawButtons();
 
         // Draw level background
         let levelWidth = level.columns * level.tileWidth;
         let levelHeight = level.rows * level.tileHeight;
         context.fillStyle = bgColor.color;
         context.fillRect(level.x - 4, level.y - 4, levelWidth + 8, levelHeight + 8);
-        //context.beginPath();
-        //context.roundRect(level.x - 4, level.y - 4, levelWidth + 8, levelHeight + 8, level.tileRadius);
-        //context.fill();
 
         // Render tiles
         renderTiles();
@@ -415,49 +403,10 @@ window.onload = function () {
         if (gameOver) {
             context.fillStyle = "rgba(0, 0, 0, 0.8)";
             context.fillRect(level.x, level.y, levelWidth, levelHeight);
-
             context.fillStyle = "#ffffff";
             context.font = "24px Verdana";
             drawCenterText("Конец игры!", level.x, level.y + levelHeight / 2 + 10, levelWidth);
             localStorage.setItem('bestScore', score.current);
-        }
-    }
-
-    // Draw a frame with a border
-    function drawFrame() {
-        // Draw background and a border
-        //context.fillStyle = "#d0d0d0";
-        //context.fillRect(0, 0, canvas.width, canvas.height);
-        //context.fillStyle = "#e8eaec";
-        //context.fillRect(1, 1, canvas.width - 2, canvas.height - 2);
-
-        // Draw header
-        //context.fillStyle = "#303030";
-        //context.fillRect(0, 0, canvas.width, 65);
-
-        // Draw title
-        //context.fillStyle = "#ffffff";
-        //context.font = "24px Verdana";
-        //context.fillText("Match3 Example - Rembound.com", 10, 30);
-
-        // Display fps
-        //context.fillStyle = "#ffffff";
-        //context.font = "12px Verdana";
-        //context.fillText("Fps: " + fps, 13, 50);
-    }
-
-    // Draw buttons
-    function drawButtons() {
-        for (let i = 0; i < buttons.length; i++) {
-            // Draw button shape
-            context.fillStyle = "#000000";
-            context.fillRect(buttons[i].x, buttons[i].y, buttons[i].width, buttons[i].height);
-
-            // Draw button text
-            context.fillStyle = "#ffffff";
-            context.font = "18px Verdana";
-            let textdim = context.measureText(buttons[i].text);
-            context.fillText(buttons[i].text, buttons[i].x + (buttons[i].width - textdim.width) / 2, buttons[i].y + 30);
         }
     }
 
@@ -488,7 +437,6 @@ window.onload = function () {
                     if (level.selectedTile.column === i && level.selectedTile.row === j) {
                         // Draw a red tile
                         drawTile(coord.tileX, coord.tileY, selectColor, 'select');
-                        //showMoves = false;
                     }
                 }
             }
@@ -497,17 +445,17 @@ window.onload = function () {
         // Render the swap animation
         if (gameState === gameStates.resolve && (animationState === 2 || animationState === 3)) {
             // Calculate the x and y shift
-            let shiftx = currentMove.column2 - currentMove.column1;
-            let shifty = currentMove.row2 - currentMove.row1;
+            let shiftX = currentMove.column2 - currentMove.column1;
+            let shiftY = currentMove.row2 - currentMove.row1;
 
             // First tile
             let coord1 = getTileCoordinate(currentMove.column1, currentMove.row1, 0, 0);
-            let coord1shift = getTileCoordinate(currentMove.column1, currentMove.row1, (animationTime / animationTimeTotal) * shiftx, (animationTime / animationTimeTotal) * shifty);
+            let coord1shift = getTileCoordinate(currentMove.column1, currentMove.row1, (animationTime / animationTimeTotal) * shiftX, (animationTime / animationTimeTotal) * shiftY);
             let col1 = tileColors[level.tiles[currentMove.column1][currentMove.row1].type];
 
             // Second tile
             let coord2 = getTileCoordinate(currentMove.column2, currentMove.row2, 0, 0);
-            let coord2shift = getTileCoordinate(currentMove.column2, currentMove.row2, (animationTime / animationTimeTotal) * -shiftx, (animationTime / animationTimeTotal) * -shifty);
+            let coord2shift = getTileCoordinate(currentMove.column2, currentMove.row2, (animationTime / animationTimeTotal) * -shiftX, (animationTime / animationTimeTotal) * -shiftY);
             let col2 = tileColors[level.tiles[currentMove.column2][currentMove.row2].type];
 
             // Draw background
@@ -536,41 +484,17 @@ window.onload = function () {
 
     // Draw a tile with a color
     function drawTile(x, y, c, type = 'tile') {
-        //console.log(level.tiles);
-        //context.fillStyle = "rgb(" + r + "," + g + "," + b + ")";
-        //context.fillRect(x + 2, y + 2, level.tileWidth - 4, level.tileHeight - 4);
-
-        //context.fillStyle = "rgba(" + r + "," + g + "," + b + ")";
-        //const gradient = context.createRadialGradient(x * 0.8, y * 0.8, level.tileWidth / 20, x / 2, y / 2, level.tileWidth * 1.5);
-
         let w = level.tileWidth;
         let t = type || 'tile';
         if (t === 'tile') {
             context.save()
-            //const gradient = context.createRadialGradient(x + w * 0.35, y + w * 0.35, w * 0.01, x + w * 0.5, y + w * 0.5, w);
-            //gradient.addColorStop(0, "white");
-            //gradient.addColorStop(0.3, "rgba(" + r + "," + g + "," + b + ")");
-            //gradient.addColorStop(1, "black");
-
-            //context.shadowOffsetX = 15;
-            //context.shadowOffsetY = 15;
-            //context.shadowBlur = 15;
-            //context.shadowColor = 'rgba(21, 24, 50, 0.3)';
-            //context.fillStyle = gradient;
-
-
             context.beginPath();
             context.fillStyle = '#ccc';
-            context.roundRect(x + 5, y + 5, w - 8, w - 8, c.radii);
+            context.roundRect(x + 9, y + 9, w - 16, w - 16, c.radii);
             context.fill();
-
             context.beginPath();
             context.fillStyle = c.color;
-            //context.strokeStyle = 'rgb(0, 0, 0, 1)';
-            //context.arc(x + level.tileWidth / 2, y + level.tileWidth / 2, level.tileWidth / 2 - 4, 0, 360)
-
-            //context.stroke();
-            context.roundRect(x + 3, y + 3, w - 8, w - 8, c.radii);
+            context.roundRect(x + 7, y + 7, w - 16, w - 16, c.radii);
             context.fill();
             context.restore();
         }
@@ -578,7 +502,6 @@ window.onload = function () {
             context.save()
             context.beginPath();
             context.fillStyle = c.color;
-            //context.arc(x + level.tileWidth / 2 - 1, y + level.tileWidth / 2, level.tileWidth / 2, 0, 360)
             context.roundRect(x, y, w, w, c.radii);
             context.fill();
             context.restore();
@@ -634,7 +557,6 @@ window.onload = function () {
                 context.lineWidth = 5;
                 context.roundRect(x, y, w, h, [0]);
                 context.fill();
-                //context.stroke();
                 // Draw text
                 context.font = `${64 * ((animationTime < 0.05 ? 0.05 : animationTime) / animationTimeTotal)}px 'Arial', sans-serif`;
                 context.strokeStyle = "white";
@@ -652,7 +574,6 @@ window.onload = function () {
 
     // Render moves
     function renderMoves() {
-        let length = showMovesCount > 0 ? showMovesCount : moves.length;
         for (let i = 0; i < moves.length; i++) {
             // Calculate coordinates of tile 1 and 2
             let coord1 = getTileCoordinate(moves[i].column1, moves[i].row1, 0, 0);
@@ -761,37 +682,37 @@ window.onload = function () {
         // Find horizontal clusters
         for (let j = 0; j < level.rows; j++) {
             // Start with a single tile, cluster of 1
-            let matchlength = 1;
+            let matchLength = 1;
             for (let i = 0; i < level.columns; i++) {
-                let checkcluster = false;
+                let checkCluster = false;
 
                 if (i === level.columns - 1) {
                     // Last tile
-                    checkcluster = true;
+                    checkCluster = true;
                 } else {
                     // Check the type of the next tile
                     if (level.tiles[i][j].type === level.tiles[i + 1][j].type &&
                         level.tiles[i][j].type !== -1) {
-                        // Same type as the previous tile, increase matchlength
-                        matchlength += 1;
+                        // Same type as the previous tile, increase matchLength
+                        matchLength += 1;
                     } else {
                         // Different type
-                        checkcluster = true;
+                        checkCluster = true;
                     }
                 }
 
                 // Check if there was a cluster
-                if (checkcluster) {
-                    if (matchlength >= 3) {
+                if (checkCluster) {
+                    if (matchLength >= 3) {
                         // Found a horizontal cluster
                         clusters.push({
-                            column: i + 1 - matchlength, row: j,
-                            length: matchlength,
+                            column: i + 1 - matchLength, row: j,
+                            length: matchLength,
                             horizontal: true
                         });
                     }
 
-                    matchlength = 1;
+                    matchLength = 1;
                 }
             }
         }
@@ -799,37 +720,37 @@ window.onload = function () {
         // Find vertical clusters
         for (let i = 0; i < level.columns; i++) {
             // Start with a single tile, cluster of 1
-            let matchlength = 1;
+            let matchLength = 1;
             for (let j = 0; j < level.rows; j++) {
-                let checkcluster = false;
+                let checkCluster = false;
 
                 if (j === level.rows - 1) {
                     // Last tile
-                    checkcluster = true;
+                    checkCluster = true;
                 } else {
                     // Check the type of the next tile
                     if (level.tiles[i][j].type === level.tiles[i][j + 1].type &&
                         level.tiles[i][j].type !== -1) {
-                        // Same type as the previous tile, increase matchlength
-                        matchlength += 1;
+                        // Same type as the previous tile, increase matchLength
+                        matchLength += 1;
                     } else {
                         // Different type
-                        checkcluster = true;
+                        checkCluster = true;
                     }
                 }
 
                 // Check if there was a cluster
-                if (checkcluster) {
-                    if (matchlength >= 3) {
+                if (checkCluster) {
+                    if (matchLength >= 3) {
                         // Found a vertical cluster
                         clusters.push({
-                            column: i, row: j + 1 - matchlength,
-                            length: matchlength,
+                            column: i, row: j + 1 - matchLength,
+                            length: matchLength,
                             horizontal: false
                         });
                     }
 
-                    matchlength = 1;
+                    matchLength = 1;
                 }
             }
         }
@@ -882,15 +803,15 @@ window.onload = function () {
         for (let i = 0; i < clusters.length; i++) {
             //  { column, row, length, horizontal }
             let cluster = clusters[i];
-            let coffset = 0;
-            let roffset = 0;
+            let colOffset = 0;
+            let rowOffset = 0;
             for (let j = 0; j < cluster.length; j++) {
-                func(i, cluster.column + coffset, cluster.row + roffset, cluster);
+                func(i, cluster.column + colOffset, cluster.row + rowOffset, cluster);
 
                 if (cluster.horizontal) {
-                    coffset++;
+                    colOffset++;
                 } else {
-                    roffset++;
+                    rowOffset++;
                 }
             }
         }
@@ -1088,10 +1009,9 @@ window.onload = function () {
         newGameButton.innerHTML = l10n.newGame[userLang];
         autoPlayButton.innerHTML = l10n.aiBot[userLang];
         changeLangButton.innerHTML = l10n.lang[userLang];
+        showMovesButton.innerHTML = l10n.showMoves[userLang];
         if (moves && moves.length) {
-            showMovesButton.innerHTML = l10n.showMoves[userLang] + ' (' + moves.length + ')';
-        } else {
-            showMovesButton.innerHTML = l10n.showMoves[userLang];
+            document.body.style.setProperty("--moves-badge-counter","'" +  moves.length + "'");
         }
     }
 
