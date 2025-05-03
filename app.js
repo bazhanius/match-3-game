@@ -24,23 +24,100 @@ const l10n = {
         "en": "Moves"
     },
     "lang": {
-        "ru": "English",
-        "en": "Русский"
+        "ru": "English 🇬🇧",
+        "en": "Русский 🇷🇺"
     },
     "gameOver": {
         "ru": "Конец игры",
         "en": "Game over"
     },
+    "boosters": {
+        "ru": "Усилители",
+        "en": "Boosters"
+    },
 }
 
 // The function gets called when the window is fully loaded
 window.onload = function () {
+
+    //------
+
+
+    let particlesPerExplosion = 20;
+    let particlesMinSpeed = 3;
+    let particlesMaxSpeed = 6;
+    let particlesMinSize = 1;
+    let particlesMaxSize = 3;
+    let particles = [];
+
+    // Draw explosion(s)
+    function drawExplosion() {
+        particles.forEach((particle, i) => {
+            if (particle.alpha <= 0) {
+                particles.splice(i, 1);
+            } else {
+                particle.update()
+            }
+        })
+    }
+
+    // Explosion
+    function generateParticles(x, y, color) {
+        for (let i = 0; i <= 16; i++) {
+            let dx = (Math.random() - 0.5) * (Math.random() * 6);
+            let dy = (Math.random() - 0.5) * (Math.random() * 6);
+            let radius = Math.random() * 20;
+            let particle = new Particle(x, y, radius, dx, dy, color);
+
+            /* Adds new items like particle*/
+            particles.push(particle);
+        }
+    }
+
+    /* Initialize particle object */
+    class Particle {
+        constructor(x, y, radius, dx, dy, color) {
+            this.x = x;
+            this.y = y;
+            this.radius = radius;
+            this.dx = dx;
+            this.dy = dy;
+            this.color = color;
+            this.alpha = 0.9;
+        }
+
+        draw() {
+            context.save();
+            context.globalAlpha = this.alpha;
+            context.fillStyle = this.color;
+            /* Begins or reset the path for 
+            the arc created */
+            context.beginPath();
+            /* Some curve is created*/
+            context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            context.fill();
+            /* Restore the recent canvas context*/
+            context.restore();
+        }
+
+        update() {
+            this.draw();
+            this.alpha -= 0.01;
+            this.x += this.dx * 2;
+            this.y += this.dy * 2;
+        }
+    }
+
+
+    //------
+
     let newGameButton = document.getElementById("new-game-button");
     let autoPlayButton = document.getElementById("auto-play-button");
     let changeLangButton = document.getElementById("change-lang-button");
     let showMovesButton = document.getElementById("show-move-button");
     let scoreCounter = document.querySelector('.score-counter');
     let bestScoreSpan = document.querySelector('.best-score > span');
+    let bombButton = document.querySelector('.bomb');
     let statistics = document.querySelector('.statistics');
 
     // Get the canvas and context
@@ -99,6 +176,8 @@ window.onload = function () {
         current: 0
     };
 
+    let statsCounter = {};
+
     // Animation variables
     let animationState = 0;
     let animationTime = 0;
@@ -106,18 +185,12 @@ window.onload = function () {
 
     // Show available moves
     let showMoves = false;
-    let showMovesCount = 1;
 
     // The AI bot
     let aiBot = false;
 
     // Game Over
     let gameOver = false;
-
-    // Gui buttons
-    let buttons = [{x: 30, y: 240, width: 150, height: 50, text: "New Game"},
-        {x: 30, y: 300, width: 150, height: 50, text: "Show Moves"},
-        {x: 30, y: 360, width: 150, height: 50, text: "Enable AI Bot"}];
 
 
     const clickType = (('ontouchstart' in window) || (navigator.MaxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
@@ -163,6 +236,10 @@ window.onload = function () {
         // Update and render the game
         update(tframe);
         render();
+
+        if (particles.length > 0) {
+            drawExplosion();
+        }
     }
 
     // Update the game state
@@ -322,16 +399,16 @@ window.onload = function () {
     }
 
     // Update stats
+    tileColors.forEach((t, i) => statsCounter[i] = 0);
+
     function updateStats() {
-        let statsCounter = {};
+        for (let key in statsCounter) {
+            statsCounter[key] = 0;
+        }
         for (let i = 0; i < level.columns; i++) {
             for (let j = 0; j < level.rows; j++) {
                 if (level.tiles[i][j].type >= 0) {
-                    if (level.tiles[i][j].type in statsCounter) {
-                        statsCounter[level.tiles[i][j].type] = statsCounter[level.tiles[i][j].type] + 1;
-                    } else {
-                        statsCounter[level.tiles[i][j].type] = 1;
-                    }
+                    statsCounter[level.tiles[i][j].type] += 1;
                 }
             }
         }
@@ -340,13 +417,13 @@ window.onload = function () {
             for (let key in statsCounter) {
                 let item = document.createElement("div");
                 item.style.backgroundColor = tileColors[key].color;
-                item.style.width = `calc(${100 * statsCounter[key] / 64}%)`
+                item.style.width = `calc(${100 * statsCounter[key] / (level.columns * level.rows)}%)`
                 statistics.appendChild(item);
             }
         }
 
         for (let key in statsCounter) {
-            statistics.childNodes[key].style.width = `calc(${100 * statsCounter[key] / 64}%)`;
+            statistics.childNodes[key].style.width = `calc(${100 * statsCounter[key] / (level.columns * level.rows)}%)`;
             statistics.childNodes[key].innerHTML = statsCounter[key];
         }
     }
@@ -365,7 +442,7 @@ window.onload = function () {
     function updateMoves() {
         if (gameState === 1) {
             showMovesButton.innerHTML = l10n.showMoves[userLang];
-            document.body.style.setProperty("--moves-badge-counter","'" +  moves.length + "'");
+            document.body.style.setProperty("--moves-badge-counter", "'" + moves.length + "'");
             updateStats();
         }
         if (showMoves) {
@@ -377,6 +454,8 @@ window.onload = function () {
 
     // Render the game
     function render() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
         // Draw score
         if (score.current !== score.previous) {
             updateScore();
@@ -424,7 +503,6 @@ window.onload = function () {
                 if (level.tiles[i][j].type >= 0) {
                     // Get the color of the tile
                     let col = tileColors[level.tiles[i][j].type];
-
                     // Draw the tile using the color
                     drawTile(coord.tileX, coord.tileY, col, 'tile');
                 } else {
@@ -479,22 +557,25 @@ window.onload = function () {
     function getTileCoordinate(column, row, columnOffset, rowOffset) {
         let tileX = level.x + (column + columnOffset) * level.tileWidth;
         let tileY = level.y + (row + rowOffset) * level.tileHeight;
-        return {tileX: tileX, tileY: tileY};
+        return {tileX: tileX, tileY: tileY, color: tileColors[level.tiles[column][row].type]};
     }
 
     // Draw a tile with a color
-    function drawTile(x, y, c, type = 'tile') {
+    function drawTile(x, y, c, type = 'tile', zoom = 1) {
         let w = level.tileWidth;
+        let wZoomed = level.tileWidth * zoom;
+        let paddingZoomed = (level.tileWidth - level.tileWidth * zoom) / 2;
         let t = type || 'tile';
+
         if (t === 'tile') {
             context.save()
             context.beginPath();
             context.fillStyle = '#ccc';
-            context.roundRect(x + 9, y + 9, w - 16, w - 16, c.radii);
+            context.roundRect(x + paddingZoomed + 9, y + paddingZoomed + 9, wZoomed - 16, wZoomed - 16, c.radii);
             context.fill();
             context.beginPath();
             context.fillStyle = c.color;
-            context.roundRect(x + 7, y + 7, w - 16, w - 16, c.radii);
+            context.roundRect(x + paddingZoomed + 7, y + paddingZoomed + 7, wZoomed - 16, wZoomed - 16, c.radii);
             context.fill();
             context.restore();
         }
@@ -520,14 +601,18 @@ window.onload = function () {
         }
     }
 
-    // Render clusters
-    let clusterZoom = []
+    function easeInBack(x) {
+        const c1 = 1.70158;
+        const c3 = c1 + 1;
+        let result = 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+        return result.toFixed(2);
+    }
 
+    // Render clusters
     function renderClusters() {
-        //console.log(animationTime , animationTimeTotal);
+        //console.log(animationTime, animationTimeTotal)
         for (let i = 0; i < clusters.length; i++) {
             // Calculate the tile coordinates
-            let id = animationTime;
             let coord = getTileCoordinate(clusters[i].column, clusters[i].row, 0, 0);
 
             let x = coord.tileX;
@@ -549,22 +634,43 @@ window.onload = function () {
                 : level.tileWidth;
 
             const draw = () => {
-                context.save()
+                context.save();
+                let zoom = easeInBack(1 - animationTime / animationTimeTotal);
+                zoom = zoom < 0.2 ? 0 : zoom;
+                if (clusters[i].zoom !== zoom) {
+                    clusters[i].zoom = zoom;
+                    if (clusters[i].horizontal) {
+                        for (let k = 0; k < clusters[i].length; k++) {
+                            drawTile(x + level.tileWidth * k, y, bgColor, 'tileBg');
+                            if (zoom > 0) {
+                                drawTile(x + level.tileWidth * k, y, clusters[i].color, 'tile', clusters[i].zoom);
+                            }
+                        }
+                    } else {
+                        for (let k = 0; k < clusters[i].length; k++) {
+                            drawTile(x, y + level.tileWidth * k, bgColor, 'tileBg');
+                            if (zoom > 0) {
+                                drawTile(x, y + level.tileWidth * k, clusters[i].color, 'tile', clusters[i].zoom);
+                            }
+                        }
+                    }
+                }
                 // Draw border around
                 context.strokeStyle = "white";
                 context.fillStyle = `rgba(255, 255, 255, 0.5)`;
-                context.beginPath();
+                //context.beginPath();
                 context.lineWidth = 5;
-                context.roundRect(x, y, w, h, [0]);
-                context.fill();
+                //context.roundRect(x, y, w, h, [0]);
+                //context.fill();
                 // Draw text
-                context.font = `${64 * ((animationTime < 0.05 ? 0.05 : animationTime) / animationTimeTotal)}px 'Arial', sans-serif`;
+                //context.font = `${64 * ((animationTime < 0.05 ? 0.05 : animationTime) / animationTimeTotal)}px 'Arial', sans-serif`;
+                context.font = "64px 'Arial', sans-serif";
                 context.strokeStyle = "white";
-                context.fillStyle = "black";
+                context.fillStyle = "rgba(0,0,0,0.5)";
                 context.textAlign = "center";
                 context.textBaseline = "middle";
-                context.strokeText('' + clusters[i].length, centerX, centerY, maxW);
-                context.fillText('' + clusters[i].length, centerX, centerY, maxW);
+                context.strokeText('' + clusters[i].length, centerX, centerY - 10 * (animationTime / animationTimeTotal), maxW);
+                context.fillText('' + clusters[i].length, centerX, centerY - 10 * (animationTime / animationTimeTotal), maxW);
                 context.restore();
             }
 
@@ -632,8 +738,6 @@ window.onload = function () {
             for (let i = 0; i < level.columns; i++) {
                 for (let j = 0; j < level.rows; j++) {
                     level.tiles[i][j].type = getRandomTile();
-                    level.tiles[i][j].size = 1;
-                    level.tiles[i][j].prev = [];
                 }
             }
 
@@ -706,9 +810,11 @@ window.onload = function () {
                     if (matchLength >= 3) {
                         // Found a horizontal cluster
                         clusters.push({
-                            column: i + 1 - matchLength, row: j,
+                            column: i + 1 - matchLength,
+                            row: j,
                             length: matchLength,
-                            horizontal: true
+                            horizontal: true,
+                            color: tileColors[level.tiles[i][j].type],
                         });
                     }
 
@@ -744,9 +850,11 @@ window.onload = function () {
                     if (matchLength >= 3) {
                         // Found a vertical cluster
                         clusters.push({
-                            column: i, row: j + 1 - matchLength,
+                            column: i,
+                            row: j + 1 - matchLength,
                             length: matchLength,
-                            horizontal: false
+                            horizontal: false,
+                            color: tileColors[level.tiles[i][j].type],
                         });
                     }
 
@@ -821,7 +929,6 @@ window.onload = function () {
     function removeClusters() {
         // Change the type of the tiles to -1, indicating a removed tile
         loopClusters(function (index, column, row, cluster) {
-            let pr = level.tiles[column][row].type
             level.tiles[column][row].type = -1;
         });
 
@@ -1011,7 +1118,7 @@ window.onload = function () {
         changeLangButton.innerHTML = l10n.lang[userLang];
         showMovesButton.innerHTML = l10n.showMoves[userLang];
         if (moves && moves.length) {
-            document.body.style.setProperty("--moves-badge-counter","'" +  moves.length + "'");
+            document.body.style.setProperty("--moves-badge-counter", "'" + moves.length + "'");
         }
     }
 
@@ -1019,6 +1126,44 @@ window.onload = function () {
 
     // Call init to start the game
     init();
+
+    bombButton.addEventListener('click', () => {
+        level.tiles.forEach((col, i) => {
+            col.forEach((rowItem, j) => {
+                if (rowItem.type === 0) {
+                    level.tiles[i][j].type = -1;
+                    generateParticles(
+                        i * level.tileWidth + level.tileWidth / 2,
+                        j * level.tileWidth + level.tileWidth / 2,
+                        'red'
+                    );
+                    //clusters.push({column: i, row: j, length: 1, horizontal: false})
+                }
+            })
+        })
+        for (let i = 0; i < level.columns; i++) {
+            let shift = 0;
+            for (let j = level.rows - 1; j >= 0; j--) {
+                // Loop from bottom to top
+                if (level.tiles[i][j].type === -1) {
+                    // Tile is removed, increase shift
+                    shift++;
+                    level.tiles[i][j].shift = 0;
+                } else {
+                    // Set the shift
+                    level.tiles[i][j].shift = shift;
+                }
+            }
+        }
+
+        // Deselect
+        level.selectedTile.selected = false;
+
+        // Start animation
+        animationState = 1;
+        animationTime = 0;
+        gameState = gameStates.resolve;
+    })
 
     newGameButton.addEventListener('click', () => {
         aiBot = false;

@@ -12,6 +12,7 @@
     <div class="app-container">
         <div class="score">
             <div class="score-counter"></div>
+            <div class="bomb">test</div>
             <div class="best-score">
                 <img src="material-icon_workspace-premium.svg" width="28" height="28" alt="">
                 <span>0</span>
@@ -21,10 +22,10 @@
         <div class="statistics"></div>
         <div class="controllers">
             <div id="new-game-button" class="controllers-item">Новая игра</div>
-            <div id="auto-play-button" class="controllers-item">ИИ-бот</div>
-            <div id="show-move-button" class="controllers-item">Ходы</div>
-            <div id="change-lang-button" class="controllers-item">English</div>
+            <div id="auto-play-button" class="controllers-item" data-role="checkbox">ИИ-бот</div>
+            <div id="show-move-button" class="controllers-item" data-role="checkbox">Ходы</div>
         </div>
+        <div id="change-lang-button" class="controllers-item controllers-item__secondary">English</div>
     </div>
 </div>
 </body>
