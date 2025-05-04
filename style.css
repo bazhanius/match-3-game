@@ -6,6 +6,7 @@ body, html, * {
     font-family: sans-serif;
     color: #424243;
     user-select: none;
+    touch-action: manipulation;
     pointer-events: auto;
 }
 
@@ -42,13 +43,18 @@ html, body {
     overflow: visible;
 }
 
-.logo {
+#timer {
+    width: 100%;
+    height: 6px;
     background: #FF5144;
     background: linear-gradient(90deg, rgba(255, 81, 68, 1) 0%, rgba(188, 93, 211, 1) 20%, rgba(19, 166, 246, 1) 40%, rgba(73, 200, 41, 1) 60%, rgba(254, 209, 3, 1) 80%, rgba(251, 174, 19, 1) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    /*-webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;*/
     font-weight: 700;
+    border: 1px solid #ccc;
 }
+
+
 
 .score {
     display: flex;
