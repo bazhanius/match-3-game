@@ -27,9 +27,13 @@ const l10n = {
         "ru": "English 🇬🇧",
         "en": "Русский 🇷🇺"
     },
-    "gameOver": {
-        "ru": "Конец игры",
-        "en": "Game over"
+    "gameOverNoMovesLeft": {
+        "ru": "Конец игры. Ходы закончились",
+        "en": "Game over. No more moves left"
+    },
+    "gameOverTimeOut": {
+        "ru": "Конец игры. Время истекло.",
+        "en": "Game over. Time's up."
     },
     "boosters": {
         "ru": "Усилители",
@@ -41,6 +45,7 @@ const l10n = {
 window.onload = function () {
 
     //------
+    // Based on https://codepen.io/enxaneta/pen/yvPmLo
 
 
     let particlesPerExplosion = 20;
@@ -52,66 +57,121 @@ window.onload = function () {
 
     // Draw explosion(s)
     function drawExplosion() {
-        particles.forEach((particle, i) => {
-            if (particle.alpha <= 0) {
-                particles.splice(i, 1);
-            } else {
-                particle.update()
+        if (particles.length > 0) {
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                if (particles[i].r < 0.5) {
+                    particles.splice(i, 1);
+                }
             }
-        })
+        }
+        if (particles.length > 0) {
+            //context.clearRect(0, 0, canvas.width, canvas.height);
+            context.save();
+            //context.globalCompositeOperation = "lighter";
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].draw();
+            }
+            context.restore();
+        }
     }
 
     // Explosion
-    function generateParticles(x, y, color) {
-        for (let i = 0; i <= 16; i++) {
-            let dx = (Math.random() - 0.5) * (Math.random() * 6);
-            let dy = (Math.random() - 0.5) * (Math.random() * 6);
-            let radius = Math.random() * 20;
-            let particle = new Particle(x, y, radius, dx, dy, color);
-
-            /* Adds new items like particle*/
-            particles.push(particle);
+    function generateParticles(x, y, c) {
+        //particles.length = 0;
+        for (let i = 0; i < particlesNumber; i++) {
+            particles.push(new Particle(x, y, c));
         }
+    }
+
+
+
+    const rad = Math.PI / 180;
+    let explosionColors = [
+        "#6A0000",
+        "#900000",
+        "#902B2B",
+        "#A63232",
+        "#A62626",
+        "#FD5039",
+        "#C12F2A",
+        "#FF6540",
+        "#f93801"
+    ];
+
+    function getExplosionColor(mainColor) {
+        let mainColorArray = Array(10).fill(mainColor);
+        let allColors = [...explosionColors, ...mainColorArray];
+        return allColors[~~(Math.random() * allColors.length)];
+    }
+
+
+    const spring = 1 / 10;
+    const friction = 0.85;
+
+    const particlesNumber = 25; // change this
+
+    function randomIntFromInterval(mn, mx) {
+        return Math.floor(Math.random() * (mx - mn + 1) + mn);
     }
 
     /* Initialize particle object */
     class Particle {
-        constructor(x, y, radius, dx, dy, color) {
-            this.x = x;
-            this.y = y;
-            this.radius = radius;
-            this.dx = dx;
-            this.dy = dy;
-            this.color = color;
-            this.alpha = 0.9;
-        }
-
-        draw() {
-            context.save();
-            context.globalAlpha = this.alpha;
-            context.fillStyle = this.color;
-            /* Begins or reset the path for 
-            the arc created */
-            context.beginPath();
-            /* Some curve is created*/
-            context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-            context.fill();
-            /* Restore the recent canvas context*/
-            context.restore();
+        constructor(x, y, c) {
+            this.decay = 0.95;
+            //////////// Change this ///////////////
+            this.r = randomIntFromInterval(5, 35);
+            this.R = 40 - this.r;
+            ////////////////////////////////////////
+            this.angle = Math.random() * 2 * Math.PI;
+            this.center = {x: x, y: y};
+            this.pos = {};
+            this.pos.x = this.center.x + this.r * Math.cos(this.angle);
+            this.pos.y = this.center.y + this.r * Math.sin(this.angle);
+            this.target = {};
+            this.target.x = this.center.x + this.R * Math.cos(this.angle);
+            this.target.y = this.center.y + this.R * Math.sin(this.angle);
+            this.color = getExplosionColor(c);// explosionColors[~~(Math.random() * explosionColors.length)];
+            this.vel = {
+                x: 0,
+                y: 0
+            };
+            this.acc = {
+                x: 0,
+                y: 0
+            };
         }
 
         update() {
-            this.draw();
-            this.alpha -= 0.01;
-            this.x += this.dx * 2;
-            this.y += this.dy * 2;
+            let dx = this.target.x - this.pos.x;
+            let dy = this.target.y - this.pos.y;
+
+            this.acc.x = dx * spring;
+            this.acc.y = dy * spring;
+            this.vel.x += this.acc.x;
+            this.vel.y += this.acc.y;
+
+            this.vel.x *= friction;
+            this.vel.y *= friction;
+
+            this.pos.x += this.vel.x;
+            this.pos.y += this.vel.y;
+
+            if (this.r > 0) this.r *= this.decay;
+        }
+
+        draw() {
+            context.fillStyle = this.color;
+            context.beginPath();
+            context.arc(this.pos.x, this.pos.y, this.r, 0, 2 * Math.PI);
+            context.fill();
         }
     }
 
 
     //------
 
-    let newGameButton = document.getElementById("new-game-button");
+    let newGameButton = document.querySelector('.new-game-button');
     let autoPlayButton = document.getElementById("auto-play-button");
     let changeLangButton = document.getElementById("change-lang-button");
     let showMovesButton = document.getElementById("show-move-button");
@@ -119,7 +179,7 @@ window.onload = function () {
     let bestScoreSpan = document.querySelector('.best-score > span');
     let bombButton = document.querySelector('.bomb');
     let statistics = document.querySelector('.statistics');
-    let timerField = document.getElementById("timer");
+    let timerFiller = document.querySelector('.timer_filler');
 
     // Get the canvas and context
     let canvas = document.getElementById("viewport");
@@ -142,7 +202,6 @@ window.onload = function () {
         rows: 8,        // Number of tile rows
         tileWidth: 80,  // Visual width of a tile
         tileHeight: 80, // Visual height of a tile
-        //tileRadius: 40,
         tiles: [],      // The two-dimensional tile array
         selectedTile: {selected: false, column: 0, row: 0}
     };
@@ -196,7 +255,10 @@ window.onload = function () {
     let aiBot = false;
 
     // Game Over
-    let gameOver = false;
+    let gameOver = {
+        status: false,
+        reason: null,
+    };
 
 
     const clickType = (('ontouchstart' in window) || (navigator.MaxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
@@ -261,7 +323,7 @@ window.onload = function () {
 
             // Check for game over
             if (moves.length <= 0) {
-                gameOver = true;
+                finishGame('noMoveLeft');
             }
 
             // Let the AI bot make a move, if enabled
@@ -394,6 +456,14 @@ window.onload = function () {
 
     // Update score
     function updateScore() {
+        // Update timer
+        let scoreDiff = score.current - score.previous;
+        if (scoreDiff > 0) {
+            let newTimerCurrent = timer.current + scoreDiff * 2;
+            timer.current = newTimerCurrent > timer.start ? timer.start : newTimerCurrent;
+        }
+
+        // Update scores
         scoreCounter.innerHTML = score.current;
         score.previous = score.current;
         if (score.current !== 0) {
@@ -485,13 +555,18 @@ window.onload = function () {
         }
 
         // Game Over overlay
-        if (gameOver) {
+        if (gameOver.status) {
             context.fillStyle = "rgba(0, 0, 0, 0.8)";
             context.fillRect(level.x, level.y, levelWidth, levelHeight);
             context.fillStyle = "#ffffff";
             context.font = "24px Verdana";
-            drawCenterText("Конец игры!", level.x, level.y + levelHeight / 2 + 10, levelWidth);
-            localStorage.setItem('bestScore', score.current);
+            drawCenterText(
+                gameOver.reason === 'timeOut'
+                    ? l10n.gameOverTimeOut[userLang]
+                    : l10n.gameOverNoMovesLeft[userLang],
+                level.x,
+                level.y + levelHeight / 2 + 10,
+                levelWidth);
         }
     }
 
@@ -672,11 +747,11 @@ window.onload = function () {
                 //context.font = `${64 * ((animationTime < 0.05 ? 0.05 : animationTime) / animationTimeTotal)}px 'Arial', sans-serif`;
                 context.font = "64px 'Arial', sans-serif";
                 context.strokeStyle = "white";
-                context.fillStyle = "rgba(0,0,0,0.5)";
+                context.fillStyle = "#424243";
                 context.textAlign = "center";
                 context.textBaseline = "middle";
-                context.strokeText('' + clusters[i].length, centerX, centerY - 15 * (animationTime / animationTimeTotal), maxW);
-                context.fillText('' + clusters[i].length, centerX, centerY - 15 * (animationTime / animationTimeTotal), maxW);
+                context.strokeText('' + clusters[i].length, centerX, centerY - 25 * (animationTime / animationTimeTotal), maxW);
+                context.fillText('' + clusters[i].length, centerX, centerY - 25 * (animationTime / animationTimeTotal), maxW);
                 context.restore();
             }
 
@@ -714,6 +789,9 @@ window.onload = function () {
         // Get best score
         bestScoreSpan.innerHTML = localStorage.getItem('bestScore') || '—';
 
+        // Start timer
+        startTimer();
+
         // Reset score
         score.previous = 0;
         score.current = 0;
@@ -723,7 +801,8 @@ window.onload = function () {
         gameState = gameStates.ready;
 
         // Reset game over
-        gameOver = false;
+        gameOver.status = false;
+        gameOver.reason = null;
 
         // Create the level
         createLevel();
@@ -731,6 +810,17 @@ window.onload = function () {
         // Find initial clusters and moves
         findMoves();
         findClusters();
+    }
+
+    // Finish game
+    function finishGame(reason) {
+        gameOver.status = true;
+        gameOver.reason = reason;
+        let bestScore = localStorage.getItem('bestScore') || 0;
+        if (score.current > bestScore) {
+            localStorage.setItem('bestScore', score.current);
+        }
+        endTimer();
     }
 
     // Create a random level
@@ -1061,7 +1151,7 @@ window.onload = function () {
             : getMousePos(canvas, e.changedTouches[0]);
 
         // Start dragging
-        if (!drag) {
+        if (!drag && gameOver.status === false) {
             // Get the tile under the mouse
             mt = getMouseTile(pos);
 
@@ -1120,7 +1210,7 @@ window.onload = function () {
     // Translate buttons
     function updateTranslate() {
         document.title = l10n.match3Game[userLang];
-        newGameButton.innerHTML = l10n.newGame[userLang];
+        //newGameButton.innerHTML = l10n.newGame[userLang];
         autoPlayButton.innerHTML = l10n.aiBot[userLang];
         changeLangButton.innerHTML = l10n.lang[userLang];
         showMovesButton.innerHTML = l10n.showMoves[userLang];
@@ -1129,12 +1219,59 @@ window.onload = function () {
         }
     }
 
+    const completionPercentageColor = [
+        [100, 'rgb(255,0,0)', '#ff0000'],
+        [96, 'rgb(255,0,0)', '#ff0000'],
+        [91, 'rgb(255,42,0)', '#ff0000'],
+        [86, 'rgb(255,91,0)', '#ff0000'],
+        [81, 'rgb(255,144,0)', '#ff0000'],
+        [76, 'rgb(255,198,0)', '#1677ff'],
+        [71, 'rgb(255,255,0)', '#1677ff'],
+        [66, 'rgb(198,255,0)', '#1677ff'],
+        [61, 'rgb(144,255,0)', '#1677ff'],
+        [56, 'rgb(91,255,0)', '#1677ff'],
+        [51, 'rgb(42,255,0)', '#1677ff'],
+        [46, 'rgb(0,255,0)', '#1677ff'],
+        [41, 'rgb(0,255,42)', '#1677ff'],
+        [36, 'rgb(0,255,91)', '#1677ff'],
+        [31, 'rgb(0,255,144)', '#1677ff'],
+        [26, 'rgb(0,255,198)', '#1677ff'],
+        [21, 'rgb(0,255,255)', '#1677ff'],
+        [16, 'rgb(0,198,255)', '#1677ff'],
+        [11, 'rgb(0,144,255)', '#1677ff'],
+        [5, 'rgb(0,91,255)', '#1677ff'],
+        [1, 'rgb(0,42,255)', '#1677ff'],
+        //[0, 'rgba(0,0,0,.25)', 'rgba(0,0,0,.25)'],
+    ];
+
+    const getCompletionPercentageColor = (percent) => {
+        for (let [levels, color1, color2] of completionPercentageColor) {
+            if (percent >= levels) return `${color2}`;
+        }
+        return undefined;
+    }
+
     function startTimer() {
+        timer.current = timer.start;
+        timerFiller.style.width = `${100 * timer.current / timer.start}%`;
+        timerFiller.style.backgroundColor = getCompletionPercentageColor(1);
         if (!timer.intervalId) {
             timer.intervalId = setInterval(() => {
-                timerField.innerHTML = timer.current;
+                let percent = (100 * timer.current / timer.start).toFixed(0);
+                timerFiller.style.width = `${percent}%`;
+                timerFiller.style.backgroundColor = getCompletionPercentageColor(100 - percent);
+                if (timer.current <= 0) {
+                    finishGame('timeOut');
+                }
+                timer.current -= 1;
             }, 1000);
         }
+    }
+
+    function endTimer() {
+        clearInterval(timer.intervalId);
+        timer.intervalId = null;
+        console.log(timer);
     }
 
     updateTranslate();
@@ -1145,13 +1282,14 @@ window.onload = function () {
     bombButton.addEventListener('click', () => {
         level.tiles.forEach((col, i) => {
             col.forEach((rowItem, j) => {
-                if (rowItem.type === 0) {
-                    level.tiles[i][j].type = -1;
+                if (rowItem.type === 4) {
+
                     generateParticles(
                         i * level.tileWidth + level.tileWidth / 2,
                         j * level.tileWidth + level.tileWidth / 2,
-                        'red'
+                        tileColors[level.tiles[i][j].type].color
                     );
+                    level.tiles[i][j].type = -1;
                     //clusters.push({column: i, row: j, length: 1, horizontal: false})
                 }
             })
@@ -1173,11 +1311,14 @@ window.onload = function () {
 
         // Deselect
         level.selectedTile.selected = false;
+        console.log(level.tiles)
 
         // Start animation
-        animationState = 1;
-        animationTime = 0;
-        gameState = gameStates.resolve;
+        setTimeout(() => {
+            animationState = 1;
+            animationTime = 0;
+            gameState = gameStates.resolve;
+        }, 500)
     })
 
     newGameButton.addEventListener('click', () => {
