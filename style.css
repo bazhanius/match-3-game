@@ -13,6 +13,8 @@ body, html, * {
 body {
     --moves-badge-display: flex;
     --moves-badge-counter: 0;
+    --bombs-badge-display: none;
+    --bombs-badge-counter: 0;
 }
 
 html, body {
@@ -96,12 +98,22 @@ html, body {
     color: rgb(0, 119, 237);
 }
 
+.boosters {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 12px;
+    overflow: visible;
+}
+
 .button {
+    position: relative;
     background-color: rgb(255, 255, 255);
     border: 2px solid rgb(0, 119, 237);
     border-radius: 6px;
     padding: 6px 12px;
     cursor: pointer;
+    overflow: visible;
     transition: all 0.3s;
 }
 
@@ -117,16 +129,28 @@ html, body {
     fill: rgb(204, 204, 204);
 }
 
+.button-badge {
+    display: var(--bombs-badge-display);
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    min-width: 1.5em;
+    min-height: 1.5em;
+    font-size: small;
+    content: var(--bombs-badge-counter);
+    position: absolute;
+    right: -0.5em;
+    top: -0.75em;
+    background-color: rgb(0, 119, 237);
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
 canvas {
     border: 2px solid #ccc;
     border-radius: 6px;
-}
-
-.boosters {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    gap: 12px;
 }
 
 .controllers {
@@ -265,4 +289,8 @@ canvas {
 .bomb {
     width: 100%;
     color: white;
+}
+
+#change-lang-button, #booster-paint-nearby {
+    display: none;
 }

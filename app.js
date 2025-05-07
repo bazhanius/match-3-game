@@ -47,6 +47,10 @@ window.onload = function () {
     //------
     // Based on https://codepen.io/enxaneta/pen/yvPmLo
 
+    let bombCounter = {
+        used: 0,
+        total: 0,
+    };
     let particles = [];
 
     // Draw explosion(s)
@@ -97,7 +101,6 @@ window.onload = function () {
         let allColors = [...explosionColors, ...mainColorArray];
         return allColors[~~(Math.random() * allColors.length)];
     }
-
 
     const spring = 1 / 10;
     const friction = 0.85;
@@ -174,6 +177,7 @@ window.onload = function () {
     let boosterPaintNearbyButton = document.getElementById('booster-paint-nearby');
     let boosterShowMoveButton = document.getElementById('booster-show-move');
     let boosterDeleteColor = document.getElementById('booster-delete-color');
+    let boosterDeleteColorBadge = document.querySelector('#booster-delete-color .button-badge');
 
     let statistics = document.querySelector('.statistics');
     let timerFiller = document.querySelector('.timer_filler');
@@ -454,6 +458,21 @@ window.onload = function () {
 
     // Update score
     function updateScore() {
+
+        // Update bombs
+        bombCounter.total = Math.floor(score.current / 1000);
+        let bombs = bombCounter.total - bombCounter.used
+        if (bombs > 0) {
+            document.body.style.setProperty("--bombs-badge-counter", "'" + bombs + "'");
+            document.body.style.setProperty("--bombs-badge-display", "flex" )
+            boosterDeleteColor.removeAttribute('disabled');
+            boosterDeleteColorBadge.innerHTML = "" + bombs;
+        } else {
+            document.body.style.setProperty("--bombs-badge-display", "none" )
+            boosterDeleteColor.setAttribute('disabled', 'disabled');
+            boosterDeleteColorBadge.innerHTML = "";
+        }
+
         // Update timer
         let scoreDiff = score.current - score.previous;
         if (scoreDiff > 0) {
@@ -580,7 +599,7 @@ window.onload = function () {
                 let shift = level.tiles[i][j].shift;
 
                 // Calculate the tile coordinates
-                let coord = getTileCoordinate(i, j, 0, (animationTime / animationTimeTotal) * shift);
+                let coord = getTileCoordinate(i, j, 0, easeOutBack(animationTime / animationTimeTotal) * shift);
 
                 // Check if there is a tile present
                 if (level.tiles[i][j].type >= 0) {
@@ -611,12 +630,12 @@ window.onload = function () {
 
             // First tile
             let coord1 = getTileCoordinate(currentMove.column1, currentMove.row1, 0, 0);
-            let coord1shift = getTileCoordinate(currentMove.column1, currentMove.row1, (animationTime / animationTimeTotal) * shiftX, (animationTime / animationTimeTotal) * shiftY);
+            let coord1shift = getTileCoordinate(currentMove.column1, currentMove.row1, easeOutBack(animationTime / animationTimeTotal) * shiftX, easeOutBack(animationTime / animationTimeTotal) * shiftY);
             let col1 = tileColors[level.tiles[currentMove.column1][currentMove.row1].type];
 
             // Second tile
             let coord2 = getTileCoordinate(currentMove.column2, currentMove.row2, 0, 0);
-            let coord2shift = getTileCoordinate(currentMove.column2, currentMove.row2, (animationTime / animationTimeTotal) * -shiftX, (animationTime / animationTimeTotal) * -shiftY);
+            let coord2shift = getTileCoordinate(currentMove.column2, currentMove.row2, easeOutBack(animationTime / animationTimeTotal) * -shiftX, easeOutBack(animationTime / animationTimeTotal) * -shiftY);
             let col2 = tileColors[level.tiles[currentMove.column2][currentMove.row2].type];
 
             // Draw background
@@ -684,7 +703,7 @@ window.onload = function () {
         }
     }
 
-    function easeInBack(x) {
+    function easeOutBack(x) {
         const c1 = 1.70158;
         const c3 = c1 + 1;
         let result = 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
@@ -717,7 +736,7 @@ window.onload = function () {
 
             const draw = () => {
                 context.save();
-                let zoom = easeInBack(1 - animationTime / animationTimeTotal);
+                let zoom = easeOutBack(1 - animationTime / animationTimeTotal);
                 zoom = zoom < 0.2 ? 0 : zoom;
                 if (clusters[i].zoom !== zoom) {
                     clusters[i].zoom = zoom;
@@ -833,6 +852,13 @@ window.onload = function () {
         }
         endTimer();
         boosterShowMoveButton.setAttribute('disabled', 'disabled');
+
+        // Reset bombs button and counters
+        document.body.style.setProperty("--bombs-badge-display", "none" )
+        boosterDeleteColor.setAttribute('disabled', 'disabled');
+        boosterDeleteColorBadge.innerHTML = "";
+        bombCounter.used = 0;
+        bombCounter.total = 0;
     }
 
     // Create a random level
@@ -1394,10 +1420,11 @@ window.onload = function () {
     boosterDeleteColor.addEventListener('click', () => {
         if (gameState === gameStates.ready) {
             // {selected: true, column: 4, row: 3}
+            bombCounter.used += 1;
             let st = level.selectedTile;
             if (st.selected) {
                 let type = level.tiles[st.column][st.row].type;
-                deleteColor(type)
+                deleteColor(type);
             }
 
         }
