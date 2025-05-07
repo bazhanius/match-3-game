@@ -47,12 +47,6 @@ window.onload = function () {
     //------
     // Based on https://codepen.io/enxaneta/pen/yvPmLo
 
-
-    let particlesPerExplosion = 20;
-    let particlesMinSpeed = 3;
-    let particlesMaxSpeed = 6;
-    let particlesMinSize = 1;
-    let particlesMaxSize = 3;
     let particles = [];
 
     // Draw explosion(s)
@@ -83,7 +77,6 @@ window.onload = function () {
             particles.push(new Particle(x, y, c));
         }
     }
-
 
 
     const rad = Math.PI / 180;
@@ -171,13 +164,17 @@ window.onload = function () {
 
     //------
 
-    let newGameButton = document.querySelector('.new-game-button');
+    let newGameButton = document.getElementById('new-game-button');
     let autoPlayButton = document.getElementById("auto-play-button");
     let changeLangButton = document.getElementById("change-lang-button");
     let showMovesButton = document.getElementById("show-move-button");
     let scoreCounter = document.querySelector('.score-counter');
     let bestScoreSpan = document.querySelector('.best-score > span');
-    let bombButton = document.querySelector('.bomb');
+
+    let boosterPaintNearbyButton = document.getElementById('booster-paint-nearby');
+    let boosterShowMoveButton = document.getElementById('booster-show-move');
+    let boosterDeleteColor = document.getElementById('booster-delete-color');
+
     let statistics = document.querySelector('.statistics');
     let timerFiller = document.querySelector('.timer_filler');
 
@@ -250,6 +247,7 @@ window.onload = function () {
 
     // Show available moves
     let showMoves = false;
+    let randomMove = null;
 
     // The AI bot
     let aiBot = false;
@@ -361,7 +359,7 @@ window.onload = function () {
                         for (let i = 0; i < clusters.length; i++) {
                             // Add extra points for longer clusters
                             score.previous = score.current;
-                            score.current = score.current + clusters[i].length;
+                            score.current = score.current + clusters[i].length * clusters[i].length;
                         }
 
                         // Clusters found, remove them
@@ -459,7 +457,7 @@ window.onload = function () {
         // Update timer
         let scoreDiff = score.current - score.previous;
         if (scoreDiff > 0) {
-            let newTimerCurrent = timer.current + scoreDiff * 2;
+            let newTimerCurrent = timer.current + (scoreDiff / 2).toFixed(0);
             timer.current = newTimerCurrent > timer.start ? timer.start : newTimerCurrent;
         }
 
@@ -552,6 +550,10 @@ window.onload = function () {
         // Render moves, when there are no clusters
         if (showMoves && clusters.length <= 0 && gameState === gameStates.ready) {
             renderMoves();
+        }
+
+        if (gameState === gameStates.resolve) {
+            showMoves = false;
         }
 
         // Game Over overlay
@@ -691,7 +693,6 @@ window.onload = function () {
 
     // Render clusters
     function renderClusters() {
-        //console.log(animationTime, animationTimeTotal)
         for (let i = 0; i < clusters.length; i++) {
             // Calculate the tile coordinates
             let coord = getTileCoordinate(clusters[i].column, clusters[i].row, 0, 0);
@@ -750,8 +751,8 @@ window.onload = function () {
                 context.fillStyle = "#424243";
                 context.textAlign = "center";
                 context.textBaseline = "middle";
-                context.strokeText('' + clusters[i].length, centerX, centerY - 25 * (animationTime / animationTimeTotal), maxW);
-                context.fillText('' + clusters[i].length, centerX, centerY - 25 * (animationTime / animationTimeTotal), maxW);
+                context.strokeText('' + clusters[i].length * clusters[i].length, centerX, centerY - 25 * (animationTime / animationTimeTotal), maxW);
+                context.fillText('' + clusters[i].length * clusters[i].length, centerX, centerY - 25 * (animationTime / animationTimeTotal), maxW);
                 context.restore();
             }
 
@@ -761,11 +762,7 @@ window.onload = function () {
 
     // Render moves
     function renderMoves() {
-        for (let i = 0; i < moves.length; i++) {
-            // Calculate coordinates of tile 1 and 2
-            let coord1 = getTileCoordinate(moves[i].column1, moves[i].row1, 0, 0);
-            let coord2 = getTileCoordinate(moves[i].column2, moves[i].row2, 0, 0);
-
+        const draw = (coord1, coord2) => {
             // Draw a line from tile 1 to tile 2
             context.strokeStyle = selectColor.color;
             context.lineWidth = 3;
@@ -780,7 +777,19 @@ window.onload = function () {
             context.beginPath();
             context.arc(coord2.tileX + level.tileWidth / 2, coord2.tileY + level.tileHeight / 2, 8, 0, 360)
             context.fill()
+        }
 
+        if (randomMove) {
+            let coord1 = getTileCoordinate(randomMove.column1, randomMove.row1, 0, 0);
+            let coord2 = getTileCoordinate(randomMove.column2, randomMove.row2, 0, 0);
+            draw(coord1, coord2)
+        } else {
+            for (let i = 0; i < moves.length; i++) {
+                // Calculate coordinates of tile 1 and 2
+                let coord1 = getTileCoordinate(moves[i].column1, moves[i].row1, 0, 0);
+                let coord2 = getTileCoordinate(moves[i].column2, moves[i].row2, 0, 0);
+                draw(coord1, coord2)
+            }
         }
     }
 
@@ -789,8 +798,10 @@ window.onload = function () {
         // Get best score
         bestScoreSpan.innerHTML = localStorage.getItem('bestScore') || '—';
 
+
         // Start timer
         startTimer();
+        boosterShowMoveButton.removeAttribute('disabled');
 
         // Reset score
         score.previous = 0;
@@ -821,6 +832,7 @@ window.onload = function () {
             localStorage.setItem('bestScore', score.current);
         }
         endTimer();
+        boosterShowMoveButton.setAttribute('disabled', 'disabled');
     }
 
     // Create a random level
@@ -1151,7 +1163,7 @@ window.onload = function () {
             : getMousePos(canvas, e.changedTouches[0]);
 
         // Start dragging
-        if (!drag && gameOver.status === false) {
+        if (!drag && gameOver.status === false && gameState === gameStates.ready) {
             // Get the tile under the mouse
             mt = getMouseTile(pos);
 
@@ -1271,7 +1283,6 @@ window.onload = function () {
     function endTimer() {
         clearInterval(timer.intervalId);
         timer.intervalId = null;
-        console.log(timer);
     }
 
     updateTranslate();
@@ -1279,11 +1290,47 @@ window.onload = function () {
     // Call init to start the game
     init();
 
-    bombButton.addEventListener('click', () => {
+    function paintNearby(col, row, type) {
+        for (let i = -1; i < 2; i++) {
+            for (let j = -1; j < 2; j++) {
+                if (typeof level.tiles[col + i][row + j] !== undefined) {
+                    level.tiles[col + i][row + j].type = -1;
+                }
+            }
+        }
+
+        for (let i = 0; i < level.columns; i++) {
+            let shift = 0;
+            for (let j = level.rows - 1; j >= 0; j--) {
+                // Loop from bottom to top
+                if (level.tiles[i][j].type === -1) {
+                    // Tile is removed, increase shift
+                    shift++;
+                    level.tiles[i][j].shift = 0;
+                } else {
+                    // Set the shift
+                    level.tiles[i][j].shift = shift;
+                }
+            }
+        }
+
+        // Deselect
+        level.selectedTile.selected = false;
+
+        // Start animation
+        setTimeout(() => {
+            animationState = 1;
+            animationTime = 0;
+            gameState = gameStates.resolve;
+        }, 500)
+    }
+
+    function deleteColor(colorType) {
+        let count = 0;
         level.tiles.forEach((col, i) => {
             col.forEach((rowItem, j) => {
-                if (rowItem.type === 4) {
-
+                if (rowItem.type === colorType) {
+                    count += 1;
                     generateParticles(
                         i * level.tileWidth + level.tileWidth / 2,
                         j * level.tileWidth + level.tileWidth / 2,
@@ -1294,6 +1341,8 @@ window.onload = function () {
                 }
             })
         })
+        score.previous = score.current;
+        score.current = score.current + count * 6;
         for (let i = 0; i < level.columns; i++) {
             let shift = 0;
             for (let j = level.rows - 1; j >= 0; j--) {
@@ -1319,12 +1368,50 @@ window.onload = function () {
             animationTime = 0;
             gameState = gameStates.resolve;
         }, 500)
-    })
+    }
 
     newGameButton.addEventListener('click', () => {
+        level.selectedTile.selected = false;
         aiBot = false;
         updateAiBot();
         newGame();
+    })
+
+    boosterShowMoveButton.addEventListener('click', () => {
+        if (gameState === gameStates.ready) {
+            randomMove = moves[~~(Math.random() * moves.length)]
+            showMoves = true;
+            boosterShowMoveButton.setAttribute('disabled', 'disabled')
+            setTimeout(() => {
+                showMoves = false;
+                randomMove = null;
+                boosterShowMoveButton.removeAttribute("disabled")
+            }, animationTimeTotal * 10000)
+            updateMoves();
+        }
+    })
+
+    boosterDeleteColor.addEventListener('click', () => {
+        if (gameState === gameStates.ready) {
+            // {selected: true, column: 4, row: 3}
+            let st = level.selectedTile;
+            if (st.selected) {
+                let type = level.tiles[st.column][st.row].type;
+                deleteColor(type)
+            }
+
+        }
+    })
+
+    boosterPaintNearbyButton.addEventListener('click', () => {
+        if (gameState === gameStates.ready) {
+            // {selected: true, column: 4, row: 3}
+            let st = level.selectedTile;
+            if (st.selected) {
+                let type = level.tiles[st.column][st.row].type;
+                paintNearby(st.column, st.row, type);
+            }
+        }
     })
 
     showMovesButton.addEventListener('click', () => {
