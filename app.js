@@ -47,9 +47,15 @@ window.onload = function () {
     //------
     // Based on https://codepen.io/enxaneta/pen/yvPmLo
 
-    let bombCounter = {
-        used: 0,
-        total: 0,
+    let boostersCounter = {
+        color: {
+            used: 0,
+            total: 0,
+        },
+        nearby: {
+            used: 0,
+            total: 0,
+        }
     };
     let particles = [];
 
@@ -174,10 +180,15 @@ window.onload = function () {
     let scoreCounter = document.querySelector('.score-counter');
     let bestScoreSpan = document.querySelector('.best-score > span');
 
-    let boosterPaintNearbyButton = document.getElementById('booster-paint-nearby');
-    let boosterShowMoveButton = document.getElementById('booster-show-move');
-    let boosterDeleteColor = document.getElementById('booster-delete-color');
-    let boosterDeleteColorBadge = document.querySelector('#booster-delete-color .button-badge');
+    // Boosters
+    let boosterShowMove = document.getElementById('booster-show-move');
+    let boosterShowMoveBadge = document.querySelector('#booster-show-move .button-badge');
+
+    let boosterBlowColor = document.getElementById('booster-blow-color');
+    let boosterBlowColorBadge = document.querySelector('#booster-blow-color .button-badge');
+
+    let boosterBlowNearby = document.getElementById('booster-blow-nearby');
+    let boosterBlowNearbyBadge = document.querySelector('#booster-blow-nearby .button-badge');
 
     let statistics = document.querySelector('.statistics');
     let timerFiller = document.querySelector('.timer_filler');
@@ -459,18 +470,30 @@ window.onload = function () {
     // Update score
     function updateScore() {
 
-        // Update bombs
-        bombCounter.total = Math.floor(score.current / 1000);
-        let bombs = bombCounter.total - bombCounter.used
-        if (bombs > 0) {
-            document.body.style.setProperty("--bombs-badge-counter", "'" + bombs + "'");
-            document.body.style.setProperty("--bombs-badge-display", "flex" )
-            boosterDeleteColor.removeAttribute('disabled');
-            boosterDeleteColorBadge.innerHTML = "" + bombs;
+        // Update boosters counter
+        boostersCounter.color.total = Math.floor(score.current / 1000);
+        boostersCounter.nearby.total = Math.floor(score.current / 500);
+        let colorDiff = boostersCounter.color.total - boostersCounter.color.used;
+        let nearbyDiff = boostersCounter.nearby.total - boostersCounter.nearby.used;
+        if (colorDiff > 0) {
+            document.body.style.setProperty("--blow-color-badge-counter", "'" + colorDiff + "'");
+            document.body.style.setProperty("--blow-color-badge-display", "flex")
+            boosterBlowColor.removeAttribute('disabled');
+            boosterBlowColorBadge.innerHTML = "" + colorDiff;
         } else {
-            document.body.style.setProperty("--bombs-badge-display", "none" )
-            boosterDeleteColor.setAttribute('disabled', 'disabled');
-            boosterDeleteColorBadge.innerHTML = "";
+            document.body.style.setProperty("--blow-color-badge-display", "none")
+            boosterBlowColor.setAttribute('disabled', 'disabled');
+            boosterBlowColorBadge.innerHTML = "";
+        }
+        if (nearbyDiff > 0) {
+            document.body.style.setProperty("--blow-nearby-badge-counter", "'" + nearbyDiff + "'");
+            document.body.style.setProperty("--blow-nearby-badge-display", "flex")
+            boosterBlowNearby.removeAttribute('disabled');
+            boosterBlowNearbyBadge.innerHTML = "" + nearbyDiff;
+        } else {
+            document.body.style.setProperty("--blow-nearby-badge-display", "none")
+            boosterBlowNearby.setAttribute('disabled', 'disabled');
+            boosterBlowNearbyBadge.innerHTML = "";
         }
 
         // Update timer
@@ -536,6 +559,7 @@ window.onload = function () {
         if (gameState === 1) {
             showMovesButton.innerHTML = l10n.showMoves[userLang];
             document.body.style.setProperty("--moves-badge-counter", "'" + moves.length + "'");
+            boosterShowMoveBadge.innerHTML = "" + moves.length;
             updateStats();
         }
         if (showMoves) {
@@ -820,7 +844,7 @@ window.onload = function () {
 
         // Start timer
         startTimer();
-        boosterShowMoveButton.removeAttribute('disabled');
+        boosterShowMove.removeAttribute('disabled');
 
         // Reset score
         score.previous = 0;
@@ -851,14 +875,16 @@ window.onload = function () {
             localStorage.setItem('bestScore', score.current);
         }
         endTimer();
-        boosterShowMoveButton.setAttribute('disabled', 'disabled');
+        boosterShowMove.setAttribute('disabled', 'disabled');
 
-        // Reset bombs button and counters
-        document.body.style.setProperty("--bombs-badge-display", "none" )
-        boosterDeleteColor.setAttribute('disabled', 'disabled');
-        boosterDeleteColorBadge.innerHTML = "";
-        bombCounter.used = 0;
-        bombCounter.total = 0;
+        // Reset boosters button and counters
+        document.body.style.setProperty("--blow-color-badge-display", "none")
+        boosterBlowColor.setAttribute('disabled', 'disabled');
+        boosterBlowColorBadge.innerHTML = "";
+        boostersCounter.color.used = 0;
+        boostersCounter.color.total = 0;
+        boostersCounter.nearby.used = 0;
+        boostersCounter.nearby.total = 0;
     }
 
     // Create a random level
@@ -1316,59 +1342,44 @@ window.onload = function () {
     // Call init to start the game
     init();
 
-    function paintNearby(col, row, type) {
-        for (let i = -1; i < 2; i++) {
-            for (let j = -1; j < 2; j++) {
-                if (typeof level.tiles[col + i][row + j] !== undefined) {
-                    level.tiles[col + i][row + j].type = -1;
-                }
-            }
-        }
-
-        for (let i = 0; i < level.columns; i++) {
-            let shift = 0;
-            for (let j = level.rows - 1; j >= 0; j--) {
-                // Loop from bottom to top
-                if (level.tiles[i][j].type === -1) {
-                    // Tile is removed, increase shift
-                    shift++;
-                    level.tiles[i][j].shift = 0;
-                } else {
-                    // Set the shift
-                    level.tiles[i][j].shift = shift;
-                }
-            }
-        }
-
-        // Deselect
-        level.selectedTile.selected = false;
-
-        // Start animation
-        setTimeout(() => {
-            animationState = 1;
-            animationTime = 0;
-            gameState = gameStates.resolve;
-        }, 500)
-    }
-
-    function deleteColor(colorType) {
+    function blowUp(blowType = null, colorType = null, col = null, row = null) {
+        if (!blowType) return;
         let count = 0;
-        level.tiles.forEach((col, i) => {
-            col.forEach((rowItem, j) => {
-                if (rowItem.type === colorType) {
-                    count += 1;
-                    generateParticles(
-                        i * level.tileWidth + level.tileWidth / 2,
-                        j * level.tileWidth + level.tileWidth / 2,
-                        tileColors[level.tiles[i][j].type].color
-                    );
-                    level.tiles[i][j].type = -1;
-                    //clusters.push({column: i, row: j, length: 1, horizontal: false})
-                }
+        if (blowType === 'color') {
+            level.tiles.forEach((col, i) => {
+                col.forEach((rowItem, j) => {
+                    if (rowItem.type === colorType) {
+                        count += 1;
+                        generateParticles(
+                            i * level.tileWidth + level.tileWidth / 2,
+                            j * level.tileWidth + level.tileWidth / 2,
+                            tileColors[level.tiles[i][j].type].color
+                        );
+                        level.tiles[i][j].type = -1;
+                        //clusters.push({column: i, row: j, length: 1, horizontal: false})
+                    }
+                })
             })
-        })
+        }
+        if (blowType === 'nearBy') {
+            for (let i = -1 ; i < 2; i++) {
+                for (let j = -1; j < 2; j++) {
+                    if (typeof level.tiles[col + i] !== 'undefined'
+                        && typeof level.tiles[col + i][row + j] !== 'undefined') {
+                        count += 1;
+                        generateParticles(
+                            (col + i) * level.tileWidth + level.tileWidth / 2,
+                            (row + j) * level.tileWidth + level.tileWidth / 2,
+                            tileColors[level.tiles[col + i][row + j].type].color
+                        );
+                        level.tiles[col + i][row + j].type = -1;
+                    }
+                }
+            }
+        }
         score.previous = score.current;
         score.current = score.current + count * 6;
+
         for (let i = 0; i < level.columns; i++) {
             let shift = 0;
             for (let j = level.rows - 1; j >= 0; j--) {
@@ -1386,7 +1397,6 @@ window.onload = function () {
 
         // Deselect
         level.selectedTile.selected = false;
-        console.log(level.tiles)
 
         // Start animation
         setTimeout(() => {
@@ -1403,40 +1413,41 @@ window.onload = function () {
         newGame();
     })
 
-    boosterShowMoveButton.addEventListener('click', () => {
+    boosterShowMove.addEventListener('click', () => {
         if (gameState === gameStates.ready) {
             randomMove = moves[~~(Math.random() * moves.length)]
             showMoves = true;
-            boosterShowMoveButton.setAttribute('disabled', 'disabled')
+            boosterShowMove.setAttribute('disabled', 'disabled')
             setTimeout(() => {
                 showMoves = false;
                 randomMove = null;
-                boosterShowMoveButton.removeAttribute("disabled")
+                boosterShowMove.removeAttribute("disabled")
             }, animationTimeTotal * 10000)
             updateMoves();
         }
     })
 
-    boosterDeleteColor.addEventListener('click', () => {
+    boosterBlowColor.addEventListener('click', () => {
         if (gameState === gameStates.ready) {
             // {selected: true, column: 4, row: 3}
-            bombCounter.used += 1;
+            boostersCounter.color.used += 1;
             let st = level.selectedTile;
             if (st.selected) {
                 let type = level.tiles[st.column][st.row].type;
-                deleteColor(type);
+                blowUp('color', type, null, null);
             }
 
         }
     })
 
-    boosterPaintNearbyButton.addEventListener('click', () => {
+    boosterBlowNearby.addEventListener('click', () => {
         if (gameState === gameStates.ready) {
             // {selected: true, column: 4, row: 3}
+            boostersCounter.nearby.used += 1;
             let st = level.selectedTile;
             if (st.selected) {
                 let type = level.tiles[st.column][st.row].type;
-                paintNearby(st.column, st.row, type);
+                blowUp('nearBy', type, st.column, st.row);
             }
         }
     })

@@ -13,8 +13,10 @@ body, html, * {
 body {
     --moves-badge-display: flex;
     --moves-badge-counter: 0;
-    --bombs-badge-display: none;
-    --bombs-badge-counter: 0;
+    --blow-color-badge-display: none;
+    --blow-color-badge-counter: 0;
+    --blow-nearby-badge-display: none;
+    --blow-nearby-badge-counter: 0;
 }
 
 html, body {
@@ -129,23 +131,37 @@ html, body {
     fill: rgb(204, 204, 204);
 }
 
-.button-badge {
-    display: var(--bombs-badge-display);
+#booster-blow-color .button-badge, #booster-show-move .button-badge, #booster-blow-nearby .button-badge {
+    display: none;
+    content: unset;
     justify-content: center;
     align-content: center;
     align-items: center;
     text-align: center;
     color: white;
-    min-width: 1.5em;
-    min-height: 1.5em;
+    min-width: 2em;
+    min-height: 2em;
     font-size: small;
-    content: var(--bombs-badge-counter);
     position: absolute;
-    right: -0.5em;
+    right: -0.75em;
     top: -0.75em;
     background-color: rgb(0, 119, 237);
     border-radius: 50%;
     border: 2px solid white;
+}
+
+#booster-blow-color .button-badge {
+    content: var(--blow-color-badge-counter);
+    display: var(--blow-color-badge-display);
+}
+#booster-show-move .button-badge {
+    content: var(--moves-badge-counter);
+    display: var(--moves-badge-display);
+}
+
+#booster-blow-nearby .button-badge {
+    content: var(--blow-nearby-badge-counter);
+    display: var(--blow-nearby-badge-display);
 }
 
 canvas {
@@ -291,6 +307,7 @@ canvas {
     color: white;
 }
 
-#change-lang-button, #booster-paint-nearby {
-    display: none;
+#change-lang-button {
+    font-size: small;
+    margin-top: 20px;
 }
