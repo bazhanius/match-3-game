@@ -55,6 +55,10 @@ window.onload = function () {
         nearby: {
             used: 0,
             total: 0,
+        },
+        any: {
+            used: 0,
+            total: 0,
         }
     };
     let particles = [];
@@ -190,6 +194,9 @@ window.onload = function () {
     let boosterBlowNearby = document.getElementById('booster-blow-nearby');
     let boosterBlowNearbyBadge = document.querySelector('#booster-blow-nearby .button-badge');
 
+    let boosterAnyColor = document.getElementById('booster-any-color');
+    let boosterAnyColorBadge = document.querySelector('#booster-any-color .button-badge');
+
     let statistics = document.querySelector('.statistics');
     let timerFiller = document.querySelector('.timer_filler');
 
@@ -250,8 +257,8 @@ window.onload = function () {
 
     let statsCounter = {};
     let timer = {
-        start: 60,
-        current: 60,
+        start: 120,
+        current: 120,
         intervalId: null
     }
 
@@ -473,8 +480,10 @@ window.onload = function () {
         // Update boosters counter
         boostersCounter.color.total = Math.floor(score.current / 1000);
         boostersCounter.nearby.total = Math.floor(score.current / 500);
+        boostersCounter.any.total = Math.floor(score.current / 250);
         let colorDiff = boostersCounter.color.total - boostersCounter.color.used;
         let nearbyDiff = boostersCounter.nearby.total - boostersCounter.nearby.used;
+        let anyDiff = boostersCounter.any.total - boostersCounter.any.used;
         if (colorDiff > 0) {
             document.body.style.setProperty("--blow-color-badge-counter", "'" + colorDiff + "'");
             document.body.style.setProperty("--blow-color-badge-display", "flex")
@@ -495,11 +504,22 @@ window.onload = function () {
             boosterBlowNearby.setAttribute('disabled', 'disabled');
             boosterBlowNearbyBadge.innerHTML = "";
         }
+        if (anyDiff > 0) {
+            document.body.style.setProperty("--any-color-badge-counter", "'" + anyDiff + "'");
+            document.body.style.setProperty("--any-color-badge-display", "flex")
+            boosterAnyColor.removeAttribute('disabled');
+            boosterAnyColorBadge.innerHTML = "" + anyDiff;
+        } else {
+            document.body.style.setProperty("--any-color-badge-display", "none")
+            boosterAnyColor.setAttribute('disabled', 'disabled');
+            boosterAnyColorBadge.innerHTML = "";
+        }
 
         // Update timer
         let scoreDiff = score.current - score.previous;
+        //console.log(scoreDiff);
         if (scoreDiff > 0) {
-            let newTimerCurrent = timer.current + (scoreDiff / 2).toFixed(0);
+            let newTimerCurrent = timer.current + Math.floor(scoreDiff / 3);
             timer.current = newTimerCurrent > timer.start ? timer.start : newTimerCurrent;
         }
 
@@ -523,7 +543,7 @@ window.onload = function () {
         }
         for (let i = 0; i < level.columns; i++) {
             for (let j = 0; j < level.rows; j++) {
-                if (level.tiles[i][j].type >= 0) {
+                if (level.tiles[i][j].type >= 0 && level.tiles[i][j].type !== 777) {
                     statsCounter[level.tiles[i][j].type] += 1;
                 }
             }
@@ -627,10 +647,14 @@ window.onload = function () {
 
                 // Check if there is a tile present
                 if (level.tiles[i][j].type >= 0) {
-                    // Get the color of the tile
-                    let col = tileColors[level.tiles[i][j].type];
-                    // Draw the tile using the color
-                    drawTile(coord.tileX, coord.tileY, col, 'tile');
+                    if (level.tiles[i][j].type === 777) {
+                        drawTile(coord.tileX, coord.tileY, null, 'superTile');
+                    } else {
+                        // Get the color of the tile
+                        let col = tileColors[level.tiles[i][j].type];
+                        // Draw the tile using the color
+                        drawTile(coord.tileX, coord.tileY, col, 'tile');
+                    }
                 } else {
                     // do smth with empty tiles:
                     // coord.tileX + level.tileWidth / 2, coord.tileY + level.tileWidth / 2));
@@ -656,11 +680,14 @@ window.onload = function () {
             let coord1 = getTileCoordinate(currentMove.column1, currentMove.row1, 0, 0);
             let coord1shift = getTileCoordinate(currentMove.column1, currentMove.row1, easeOutBack(animationTime / animationTimeTotal) * shiftX, easeOutBack(animationTime / animationTimeTotal) * shiftY);
             let col1 = tileColors[level.tiles[currentMove.column1][currentMove.row1].type];
+            let col1DrawType = level.tiles[currentMove.column1][currentMove.row1].type === 777 ? 'superTile' : 'tile';
 
             // Second tile
             let coord2 = getTileCoordinate(currentMove.column2, currentMove.row2, 0, 0);
             let coord2shift = getTileCoordinate(currentMove.column2, currentMove.row2, easeOutBack(animationTime / animationTimeTotal) * -shiftX, easeOutBack(animationTime / animationTimeTotal) * -shiftY);
             let col2 = tileColors[level.tiles[currentMove.column2][currentMove.row2].type];
+            let col2DrawType = level.tiles[currentMove.column2][currentMove.row2].type === 777 ? 'superTile' : 'tile';
+
 
             // Draw background
             drawTile(coord1.tileX, coord1.tileY, bgColor, 'tileBg');
@@ -669,12 +696,12 @@ window.onload = function () {
             // Change the order, depending on the animation state
             if (animationState === 2) {
                 // Draw the tiles
-                drawTile(coord1shift.tileX, coord1shift.tileY, col1, 'tile');
-                drawTile(coord2shift.tileX, coord2shift.tileY, col2, 'tile');
+                drawTile(coord1shift.tileX, coord1shift.tileY, col1, col1DrawType);
+                drawTile(coord2shift.tileX, coord2shift.tileY, col2, col2DrawType);
             } else {
                 // Draw the tiles
-                drawTile(coord2shift.tileX, coord2shift.tileY, col2, 'tile');
-                drawTile(coord1shift.tileX, coord1shift.tileY, col1, 'tile');
+                drawTile(coord2shift.tileX, coord2shift.tileY, col2, col2DrawType);
+                drawTile(coord1shift.tileX, coord1shift.tileY, col1, col1DrawType);
             }
         }
     }
@@ -686,6 +713,78 @@ window.onload = function () {
         return {tileX: tileX, tileY: tileY, color: tileColors[level.tiles[column][row].type]};
     }
 
+    // Draw superTile
+    const drawSpiralCircle = (xCenter, yCenter, radius, arrayOfColors, progress) => {
+        let center = {x: xCenter, y: yCenter};
+
+        // Calc coord on circle
+        const coordsOnCircle = (radius, angleRadians, xCenter, yCenter) => {
+            //let angleRadians = angleDegrees * (Math.PI / 180);
+            let x = xCenter + radius * Math.cos(angleRadians);
+            let y = yCenter + radius * Math.sin(angleRadians);
+            return {x: x, y: y}
+        }
+
+        // Calc coord on line (lerp)
+        const coordsOnLine = (start, final, progress) => {
+            return {
+                x: start.x + (final.x - start.x) * progress,
+                y: start.y + (final.y - start.y) * progress
+            }
+        }
+
+        for (let i = 0; i < arrayOfColors.length; i++) {
+            let startAngle = (360 / arrayOfColors.length) * i * (Math.PI / 180)
+            let endAngle = (360 / arrayOfColors.length) * (i + 1) * (Math.PI / 180)
+            let nextAngle = (360 / arrayOfColors.length) * (i + 2) * (Math.PI / 180)
+
+            // Finding coordinates of points on circle for bezier control points
+            let coordsStart = coordsOnCircle(radius, startAngle, xCenter, yCenter);
+            let coordsEnd = coordsOnCircle(radius, endAngle, xCenter, yCenter);
+            let coordsNextEnd = coordsOnCircle(radius, nextAngle, xCenter, yCenter);
+
+            // Finding control points
+            let cpStart1 = coordsOnLine(coordsEnd, coordsNextEnd, progress);
+            let cpStart2 = coordsOnLine(coordsNextEnd, center, progress);
+
+            let cpEnd1 = coordsOnLine(center, coordsEnd, progress);
+            let cpEnd2 = coordsOnLine(coordsStart, coordsEnd, progress);
+
+            context.save();
+            context.fillStyle = arrayOfColors[i].color;
+            context.strokeStyle = arrayOfColors[i].color;
+
+            context.beginPath();
+
+            // Draw arc sector
+            context.arc(xCenter, yCenter, radius, startAngle, endAngle);
+
+            // Draw curved line from arc end to circle center
+            context.bezierCurveTo(
+                cpStart1.x, //(coordsEnd.x + coordsNextEnd.x) / 2,
+                cpStart1.y, //(coordsEnd.y + coordsNextEnd.y) / 2,
+                cpStart2.x, //(coordsNextEnd.x + xCenter) / 2,
+                cpStart2.y, //(coordsNextEnd.y + yCenter) / 2,
+                center.x,
+                center.y
+            );
+
+            // Draw curved line from circle center to arc start
+            context.bezierCurveTo(
+                cpEnd1.x, //(xCenter + coordsEnd.x) / 2,
+                cpEnd1.y, //(yCenter + coordsEnd.y) / 2,
+                cpEnd2.x, //(coordsStart.x + coordsEnd.x) / 2,
+                cpEnd2.y, //(coordsStart.y + coordsEnd.y) / 2,
+                coordsStart.x,
+                coordsStart.y
+            );
+
+            context.fill();
+            context.stroke();
+            context.restore();
+        }
+    }
+
     // Draw a tile with a color
     function drawTile(x, y, c, type = 'tile', zoom = 1) {
         let w = level.tileWidth;
@@ -693,6 +792,15 @@ window.onload = function () {
         let paddingZoomed = (level.tileWidth - level.tileWidth * zoom) / 2;
         let t = type || 'tile';
 
+        if (t === 'superTile') {
+            drawSpiralCircle(
+                x + (level.tileWidth / 2),
+                y + (level.tileWidth / 2),
+                (wZoomed / 2) - 8,
+                tileColors,
+                0.5
+            )
+        }
         if (t === 'tile') {
             context.save()
             context.beginPath();
@@ -815,10 +923,10 @@ window.onload = function () {
             context.lineTo(coord2.tileX + level.tileWidth / 2, coord2.tileY + level.tileHeight / 2);
             context.stroke();
             context.beginPath();
-            context.arc(coord1.tileX + level.tileWidth / 2, coord1.tileY + level.tileHeight / 2, 8, 0, 360)
+            context.arc(coord1.tileX + level.tileWidth / 2, coord1.tileY + level.tileHeight / 2, 8, 0, 2 * Math.PI)
             context.fill()
             context.beginPath();
-            context.arc(coord2.tileX + level.tileWidth / 2, coord2.tileY + level.tileHeight / 2, 8, 0, 360)
+            context.arc(coord2.tileX + level.tileWidth / 2, coord2.tileY + level.tileHeight / 2, 8, 0, 2 * Math.PI)
             context.fill()
         }
 
@@ -875,16 +983,28 @@ window.onload = function () {
             localStorage.setItem('bestScore', score.current);
         }
         endTimer();
-        boosterShowMove.setAttribute('disabled', 'disabled');
 
         // Reset boosters button and counters
+        boosterShowMove.setAttribute('disabled', 'disabled');
+
         document.body.style.setProperty("--blow-color-badge-display", "none")
         boosterBlowColor.setAttribute('disabled', 'disabled');
         boosterBlowColorBadge.innerHTML = "";
+
+        document.body.style.setProperty("--blow-nearby-badge-display", "none")
+        boosterBlowNearby.setAttribute('disabled', 'disabled');
+        boosterBlowNearbyBadge.innerHTML = "";
+
+        document.body.style.setProperty("--any-color-badge-display", "none")
+        boosterAnyColor.setAttribute('disabled', 'disabled');
+        boosterAnyColorBadge.innerHTML = "";
+
         boostersCounter.color.used = 0;
         boostersCounter.color.total = 0;
         boostersCounter.nearby.used = 0;
         boostersCounter.nearby.total = 0;
+        boostersCounter.any.used = 0;
+        boostersCounter.any.total = 0;
     }
 
     // Create a random level
@@ -938,90 +1058,100 @@ window.onload = function () {
         }
     }
 
+    const findMatchesWithWildcard = (arr) => {
+        let result = [];
+        arr.forEach((el, i) => {
+            let index = result.findIndex(x => x.startIndex + x.length === i);
+            //console.log(i, index)
+            if (index < 0) {
+                result.push({startIndex: i, length: 1, value: el})
+            } else {
+                if (result[index].value === el) {
+                    result[index].length += 1;
+                } else {
+                    result.push({startIndex: i, length: 1, value: el})
+                }
+            }
+        })
+
+        let jokerIndex = result.findIndex(x => x.value === 777);
+        if (jokerIndex > -1) {
+            let beforeJokerVal = result[jokerIndex - 1]?.value || null;
+            let afterJokerVal = result[jokerIndex + 1]?.value || null;
+
+            if (result[jokerIndex].startIndex === 0) {
+                //console.log('нужно вправо')
+                result[jokerIndex + 1].length += 1;
+                result[jokerIndex + 1].startIndex -= 1;
+                result.splice(jokerIndex, 1);
+            } else if (result[jokerIndex].startIndex === arr.length - 1) {
+                //console.log('нужно влево')
+                result[jokerIndex - 1].length += 1;
+                result.splice(jokerIndex, 1);
+            } else if (beforeJokerVal === afterJokerVal) {
+                //console.log('нужно сливать лево и право')
+                //console.log(result);
+                result[jokerIndex - 1].length += (result[jokerIndex + 1].length + 1);
+                result.splice(jokerIndex, 2);
+            } else if (beforeJokerVal !== afterJokerVal) {
+                //console.log('соседимся влево и вправо');
+                result[jokerIndex - 1].length += 1;
+                result[jokerIndex + 1].length += 1;
+                result[jokerIndex + 1].startIndex -= 1;
+                result.splice(jokerIndex, 1);
+            }
+
+        }
+
+        return result.filter(x => x.length >= 3);
+    }
+
     // Find clusters in the level
     function findClusters() {
+
         // Reset clusters
         clusters = []
 
         // Find horizontal clusters
         for (let j = 0; j < level.rows; j++) {
-            // Start with a single tile, cluster of 1
-            let matchLength = 1;
-            for (let i = 0; i < level.columns; i++) {
-                let checkCluster = false;
+            let arr = level.tiles.map(x => x[j].type);
+            let result = findMatchesWithWildcard(arr);
 
-                if (i === level.columns - 1) {
-                    // Last tile
-                    checkCluster = true;
-                } else {
-                    // Check the type of the next tile
-                    if (level.tiles[i][j].type === level.tiles[i + 1][j].type &&
-                        level.tiles[i][j].type !== -1) {
-                        // Same type as the previous tile, increase matchLength
-                        matchLength += 1;
-                    } else {
-                        // Different type
-                        checkCluster = true;
-                    }
-                }
-
-                // Check if there was a cluster
-                if (checkCluster) {
-                    if (matchLength >= 3) {
-                        // Found a horizontal cluster
+            if (result.length > 0) {
+                result.forEach(item => {
+                    if (item.value !== -1) {
                         clusters.push({
-                            column: i + 1 - matchLength,
+                            column: item.startIndex,
                             row: j,
-                            length: matchLength,
+                            length: item.length,
                             horizontal: true,
-                            color: tileColors[level.tiles[i][j].type],
+                            color: tileColors[item.value],
                         });
                     }
-
-                    matchLength = 1;
-                }
+                })
             }
         }
 
         // Find vertical clusters
         for (let i = 0; i < level.columns; i++) {
-            // Start with a single tile, cluster of 1
-            let matchLength = 1;
-            for (let j = 0; j < level.rows; j++) {
-                let checkCluster = false;
+            let arr = level.tiles[i].map(x => x.type);
+            let result = findMatchesWithWildcard(arr);
 
-                if (j === level.rows - 1) {
-                    // Last tile
-                    checkCluster = true;
-                } else {
-                    // Check the type of the next tile
-                    if (level.tiles[i][j].type === level.tiles[i][j + 1].type &&
-                        level.tiles[i][j].type !== -1) {
-                        // Same type as the previous tile, increase matchLength
-                        matchLength += 1;
-                    } else {
-                        // Different type
-                        checkCluster = true;
-                    }
-                }
-
-                // Check if there was a cluster
-                if (checkCluster) {
-                    if (matchLength >= 3) {
-                        // Found a vertical cluster
+            if (result.length > 0) {
+                result.forEach(item => {
+                    if (item.value !== -1) {
                         clusters.push({
                             column: i,
-                            row: j + 1 - matchLength,
-                            length: matchLength,
+                            row: item.startIndex,
+                            length: item.length,
                             horizontal: false,
-                            color: tileColors[level.tiles[i][j].type],
+                            color: tileColors[item.value],
                         });
                     }
-
-                    matchLength = 1;
-                }
+                })
             }
         }
+
     }
 
     // Find available moves
@@ -1362,7 +1492,7 @@ window.onload = function () {
             })
         }
         if (blowType === 'nearBy') {
-            for (let i = -1 ; i < 2; i++) {
+            for (let i = -1; i < 2; i++) {
                 for (let j = -1; j < 2; j++) {
                     if (typeof level.tiles[col + i] !== 'undefined'
                         && typeof level.tiles[col + i][row + j] !== 'undefined') {
@@ -1376,6 +1506,9 @@ window.onload = function () {
                     }
                 }
             }
+        }
+        if (blowType === 'any') {
+
         }
         score.previous = score.current;
         score.current = score.current + count * 6;
@@ -1424,6 +1557,29 @@ window.onload = function () {
                 boosterShowMove.removeAttribute("disabled")
             }, animationTimeTotal * 10000)
             updateMoves();
+        }
+    })
+
+    boosterAnyColor.addEventListener('click', () => {
+        if (gameState === gameStates.ready) {
+            // {selected: true, column: 4, row: 3}
+            boostersCounter.any.used += 1;
+            let st = level.selectedTile;
+            if (st.selected) {
+                level.tiles[st.column][st.row].type = 777;
+                ///blowUp('color', type, null, null);
+            }
+
+            // Deselect
+            level.selectedTile.selected = false;
+
+            // Start animation
+            setTimeout(() => {
+                animationState = 0;
+                animationTime = 0;
+                gameState = gameStates.resolve;
+            }, 300)
+
         }
     })
 

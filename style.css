@@ -17,6 +17,8 @@ body {
     --blow-color-badge-counter: 0;
     --blow-nearby-badge-display: none;
     --blow-nearby-badge-counter: 0;
+    --any-color-badge-display: none;
+    --any-color-badge-counter: 0;
 }
 
 html, body {
@@ -104,7 +106,7 @@ html, body {
     display: flex;
     flex-direction: row;
     justify-content: center;
-    gap: 12px;
+    gap: 16px;
     overflow: visible;
 }
 
@@ -131,9 +133,13 @@ html, body {
     fill: rgb(204, 204, 204);
 }
 
-#booster-blow-color .button-badge, #booster-show-move .button-badge, #booster-blow-nearby .button-badge {
+#booster-blow-color .button-badge,
+#booster-show-move .button-badge,
+#booster-blow-nearby .button-badge,
+#booster-any-color .button-badge{
     display: none;
     content: unset;
+    flex-direction: column;
     justify-content: center;
     align-content: center;
     align-items: center;
@@ -162,6 +168,11 @@ html, body {
 #booster-blow-nearby .button-badge {
     content: var(--blow-nearby-badge-counter);
     display: var(--blow-nearby-badge-display);
+}
+
+#booster-any-color .button-badge {
+    content: var(--any-color-badge-counter);
+    display: var(--any-color-badge-display);
 }
 
 canvas {
