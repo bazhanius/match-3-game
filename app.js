@@ -472,6 +472,7 @@ window.onload = function () {
     function drawCenterText(text, x, y, width) {
         let textDim = context.measureText(text);
         context.fillText(text, x + (width - textDim.width) / 2, y);
+
     }
 
     // Update score
@@ -1555,7 +1556,7 @@ window.onload = function () {
                 showMoves = false;
                 randomMove = null;
                 boosterShowMove.removeAttribute("disabled")
-            }, animationTimeTotal * 10000)
+            }, 5000)
             updateMoves();
         }
     })
@@ -1567,7 +1568,6 @@ window.onload = function () {
             let st = level.selectedTile;
             if (st.selected) {
                 level.tiles[st.column][st.row].type = 777;
-                ///blowUp('color', type, null, null);
             }
 
             // Deselect

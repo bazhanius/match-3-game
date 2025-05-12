@@ -119,10 +119,11 @@ html, body {
     cursor: pointer;
     overflow: visible;
     transition: all 0.3s;
+    z-index: 1;
 }
 
 .button:active {
-  background-color: rgba(0, 119, 237, .1);
+    background-color: rgba(0, 119, 237, .1);
 }
 
 .button:disabled {
@@ -136,7 +137,7 @@ html, body {
 #booster-blow-color .button-badge,
 #booster-show-move .button-badge,
 #booster-blow-nearby .button-badge,
-#booster-any-color .button-badge{
+#booster-any-color .button-badge {
     display: none;
     content: unset;
     flex-direction: column;
@@ -160,6 +161,7 @@ html, body {
     content: var(--blow-color-badge-counter);
     display: var(--blow-color-badge-display);
 }
+
 #booster-show-move .button-badge {
     content: var(--moves-badge-counter);
     display: var(--moves-badge-display);
@@ -173,6 +175,33 @@ html, body {
 #booster-any-color .button-badge {
     content: var(--any-color-badge-counter);
     display: var(--any-color-badge-display);
+}
+
+#booster-show-move[disabled=disabled]:before {
+    position: absolute;
+    content: '';
+    display: block;
+    width: 100%;
+    height: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 119, 237, .1);
+    z-index: -1;
+    animation-name: height-rise;
+    animation-duration: 5s;
+    animation-delay: 0s;
+    animation-iteration-count: 1;
+    animation-timing-function: linear;
+}
+
+@keyframes height-rise {
+    from {
+        height: 0;
+    }
+    to {
+        /* returns the sun to its default position */
+        height: 100%;
+    }
 }
 
 canvas {
