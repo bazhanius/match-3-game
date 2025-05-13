@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // Based on http://rembound.com/articles/how-to-make-a-match3-game-with-html5-canvas
-// Copyright (c) 2015 Rembound.com
-// Copyright (c) 2025 Alexander Bazhanov
+// Copyright (c) 2015 Rembound https://github.com/rembound/
+// Copyright (c) 2025 Alexander Bazhanov https://github.com/bazhanius
 // ------------------------------------------------------------------------
 
 let userLang = navigator.language.indexOf('ru') !== -1 ? 'ru' : 'en';
@@ -47,23 +47,6 @@ window.onload = function () {
     //------
     // Based on https://codepen.io/enxaneta/pen/yvPmLo
 
-    let boostersCounter = {
-        color: {
-            used: 0,
-            total: 0,
-            score: 1000
-        },
-        nearby: {
-            used: 0,
-            total: 0,
-            score: 500
-        },
-        any: {
-            used: 0,
-            total: 0,
-            score: 250
-        }
-    };
     let particles = [];
 
     // Draw explosion(s)
@@ -238,6 +221,10 @@ window.onload = function () {
     ]
     let bgColor = {color: "rgb(245, 245, 247)", radii: [0, 0, 0, 0]}
     let selectColor = {color: "rgb(0, 119, 237)", radii: [0, 0, 0, 0]}
+    let jokerTile ={
+        value: 777,
+        exists: false,
+    }
 
     // Clusters and moves that were found
     let clusters = [];  // { column, row, length, horizontal }
@@ -257,6 +244,25 @@ window.onload = function () {
     };
 
     let statsCounter = {};
+
+    let boostersCounter = {
+        color: {
+            used: 0,
+            total: 0,
+            score: 1000
+        },
+        nearby: {
+            used: 0,
+            total: 0,
+            score: 500
+        },
+        any: {
+            used: 0,
+            total: 0,
+            score: 250
+        }
+    };
+
     let timer = {
         start: 120,
         current: 120,
@@ -478,6 +484,7 @@ window.onload = function () {
 
     // Update score
     function updateScore() {
+        jokerTile.exists = level.tiles.flat().filter(x => x.type === jokerTile.value).length > 0;
 
         // Update boosters counter
         boostersCounter.color.total = Math.floor(score.current / boostersCounter.color.score);
@@ -494,7 +501,7 @@ window.onload = function () {
         let colorDiff = boostersCounter.color.total - boostersCounter.color.used;
         let nearbyDiff = boostersCounter.nearby.total - boostersCounter.nearby.used;
         let anyDiff = boostersCounter.any.total - boostersCounter.any.used;
-        if (colorDiff > 0) {
+        if (colorDiff > 0 && jokerTile.exists === false) {
             document.body.style.setProperty("--blow-color-badge-counter", "'" + colorDiff + "'");
             document.body.style.setProperty("--blow-color-badge-display", "flex")
             boosterBlowColor.removeAttribute('disabled');
@@ -517,7 +524,11 @@ window.onload = function () {
         if (anyDiff > 0) {
             document.body.style.setProperty("--any-color-badge-counter", "'" + anyDiff + "'");
             document.body.style.setProperty("--any-color-badge-display", "flex")
-            boosterAnyColor.removeAttribute('disabled');
+            if (jokerTile.exists) {
+                boosterAnyColor.setAttribute('disabled', 'disabled');
+            } else {
+                boosterAnyColor.removeAttribute('disabled');
+            }
             boosterAnyColorBadge.innerHTML = "" + anyDiff;
         } else {
             document.body.style.setProperty("--any-color-badge-display", "none")
@@ -553,7 +564,7 @@ window.onload = function () {
         }
         for (let i = 0; i < level.columns; i++) {
             for (let j = 0; j < level.rows; j++) {
-                if (level.tiles[i][j].type >= 0 && level.tiles[i][j].type !== 777) {
+                if (level.tiles[i][j].type >= 0 && level.tiles[i][j].type !== jokerTile.value) {
                     statsCounter[level.tiles[i][j].type] += 1;
                 }
             }
@@ -657,7 +668,7 @@ window.onload = function () {
 
                 // Check if there is a tile present
                 if (level.tiles[i][j].type >= 0) {
-                    if (level.tiles[i][j].type === 777) {
+                    if (level.tiles[i][j].type === jokerTile.value) {
                         drawTile(coord.tileX, coord.tileY, null, 'superTile');
                     } else {
                         // Get the color of the tile
@@ -690,13 +701,13 @@ window.onload = function () {
             let coord1 = getTileCoordinate(currentMove.column1, currentMove.row1, 0, 0);
             let coord1shift = getTileCoordinate(currentMove.column1, currentMove.row1, easeOutBack(animationTime / animationTimeTotal) * shiftX, easeOutBack(animationTime / animationTimeTotal) * shiftY);
             let col1 = tileColors[level.tiles[currentMove.column1][currentMove.row1].type];
-            let col1DrawType = level.tiles[currentMove.column1][currentMove.row1].type === 777 ? 'superTile' : 'tile';
+            let col1DrawType = level.tiles[currentMove.column1][currentMove.row1].type === jokerTile.value ? 'superTile' : 'tile';
 
             // Second tile
             let coord2 = getTileCoordinate(currentMove.column2, currentMove.row2, 0, 0);
             let coord2shift = getTileCoordinate(currentMove.column2, currentMove.row2, easeOutBack(animationTime / animationTimeTotal) * -shiftX, easeOutBack(animationTime / animationTimeTotal) * -shiftY);
             let col2 = tileColors[level.tiles[currentMove.column2][currentMove.row2].type];
-            let col2DrawType = level.tiles[currentMove.column2][currentMove.row2].type === 777 ? 'superTile' : 'tile';
+            let col2DrawType = level.tiles[currentMove.column2][currentMove.row2].type === jokerTile.value ? 'superTile' : 'tile';
 
 
             // Draw background
@@ -950,9 +961,12 @@ window.onload = function () {
 
     // Start a new game
     function newGame() {
-        // Get best score
-        bestScoreSpan.innerHTML = localStorage.getItem('bestScore') || '—';
 
+        // Reset game
+        finishGame('');
+
+        // Get best score
+        bestScoreSpan.innerHTML = localStorage.getItem('Match3GameBestScore') || '—';
 
         // Start timer
         startTimer();
@@ -982,9 +996,9 @@ window.onload = function () {
     function finishGame(reason) {
         gameOver.status = true;
         gameOver.reason = reason;
-        let bestScore = localStorage.getItem('bestScore') || 0;
+        let bestScore = localStorage.getItem('Match3GameBestScore') || 0;
         if (score.current > bestScore) {
-            localStorage.setItem('bestScore', score.current);
+            localStorage.setItem('Match3GameBestScore', score.current);
         }
         endTimer();
 
@@ -1090,7 +1104,7 @@ window.onload = function () {
         })
 
         // Only if "Joker" exists is in the given array
-        let jokerIndex = result.findIndex(x => x.value === 777);
+        let jokerIndex = result.findIndex(x => x.value === jokerTile.value);
         if (jokerIndex > -1) {
             let beforeJokerVal = result[jokerIndex - 1]?.value || null;
             let afterJokerVal = result[jokerIndex + 1]?.value || null;
@@ -1576,16 +1590,19 @@ window.onload = function () {
     })
 
     boosterAnyColor.addEventListener('click', () => {
-        if (gameState === gameStates.ready) {
+        if (gameState === gameStates.ready && !jokerTile.exists) {
             // {selected: true, column: 4, row: 3}
+            jokerTile.exists = true;
             boostersCounter.any.used += 1;
             let st = level.selectedTile;
             if (st.selected) {
-                level.tiles[st.column][st.row].type = 777;
+                level.tiles[st.column][st.row].type = jokerTile.value;
             }
 
             // Deselect
             level.selectedTile.selected = false;
+
+            updateScore();
 
             // Start animation
             setTimeout(() => {
@@ -1593,7 +1610,6 @@ window.onload = function () {
                 animationTime = 0;
                 gameState = gameStates.resolve;
             }, 300)
-
         }
     })
 
