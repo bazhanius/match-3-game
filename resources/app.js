@@ -40,8 +40,8 @@ const l10n = {
         "en": "Boosters"
     },
     "chooseTileFirst": {
-        "ru": "ℹ️ Сначала выберите плитку",
-        "en": "ℹ️ First select the tile"
+        "ru": "Сначала выберите плитку",
+        "en": "First select the tile"
     },
 }
 
@@ -168,6 +168,8 @@ window.onload = function () {
     let newGameButton = document.getElementById('new-game-button');
     let autoPlayButton = document.getElementById("auto-play-button");
     let changeLangButton = document.getElementById("change-lang-button");
+    let ruLangItems = document.querySelectorAll('[data-lang="ru"]');
+    let enLangItems = document.querySelectorAll('[data-lang="en"]');
     let faqModal = document.querySelector('.faq-modal')
     let faqModalOpenButton = document.getElementById("faq-modal-button");
     let faqModalCloseButton = document.querySelector('.faq-modal-close-button');
@@ -267,7 +269,7 @@ window.onload = function () {
         any: {
             used: 0,
             total: 0,
-            score: 2
+            score: 250
         }
     };
 
@@ -1004,10 +1006,13 @@ window.onload = function () {
     function finishGame(reason) {
         gameOver.status = true;
         gameOver.reason = reason;
+
+        // Save score if new record
         let bestScore = localStorage.getItem('Match3GameBestScore') || 0;
         if (score.current > bestScore) {
             localStorage.setItem('Match3GameBestScore', score.current);
         }
+
         endTimer();
 
         // Reset boosters button and counters
@@ -1444,10 +1449,17 @@ window.onload = function () {
         document.title = l10n.match3Game[userLang];
         //newGameButton.innerHTML = l10n.newGame[userLang];
         autoPlayButton.innerHTML = l10n.aiBot[userLang];
-        changeLangButton.innerHTML = l10n.lang[userLang];
+        //changeLangButton.innerHTML = l10n.lang[userLang];
         showMovesButton.innerHTML = l10n.showMoves[userLang];
         if (moves && moves.length) {
             document.body.style.setProperty("--moves-badge-counter", "'" + moves.length + "'");
+        }
+        if (userLang === 'ru') {
+            ruLangItems.forEach(x => x.style.display = 'block');
+            enLangItems.forEach(x => x.style.display = 'none');
+        } else {
+            ruLangItems.forEach(x => x.style.display = 'none');
+            enLangItems.forEach(x => x.style.display = 'block');
         }
     }
 
@@ -1585,11 +1597,13 @@ window.onload = function () {
     })
 
     function showSnackbar(text) {
-        snackbar.innerHTML = text;
-        snackbar.classList.add("snackbar-show");
-        setTimeout(() => {
-            snackbar.classList.remove("snackbar-show");
-        }, 3000);
+        if (!snackbar.classList.contains("snackbar-show")) {
+            snackbar.innerHTML = text;
+            snackbar.classList.add("snackbar-show");
+            setTimeout(() => {
+                snackbar.classList.remove("snackbar-show");
+            }, 3000);
+        }
     }
 
     boosterShowMove.addEventListener('click', () => {
@@ -1644,6 +1658,8 @@ window.onload = function () {
                 blowUp('color', type, null, null);
             }
 
+        } else {
+            showSnackbar(l10n.chooseTileFirst[userLang])
         }
     })
 
@@ -1657,6 +1673,8 @@ window.onload = function () {
                 let type = level.tiles[st.column][st.row].type;
                 blowUp('nearBy', type, st.column, st.row);
             }
+        } else {
+            showSnackbar(l10n.chooseTileFirst[userLang])
         }
     })
 
