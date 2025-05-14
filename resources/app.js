@@ -221,7 +221,7 @@ window.onload = function () {
     ]
     let bgColor = {color: "rgb(245, 245, 247)", radii: [0, 0, 0, 0]}
     let selectColor = {color: "rgb(0, 119, 237)", radii: [0, 0, 0, 0]}
-    let jokerTile ={
+    let jokerTile = {
         value: 777,
         exists: false,
     }
@@ -1085,9 +1085,10 @@ window.onload = function () {
             // Add series if not exists
             if (index < 0) {
                 result.push({
-                    startIndex: i,
-                    length: 1,
-                    value: el}
+                        startIndex: i,
+                        length: 1,
+                        value: el
+                    }
                 );
             } else { // If series exists
                 // Prolong series if the same color
@@ -1589,7 +1590,8 @@ window.onload = function () {
         }
     })
 
-    boosterAnyColor.addEventListener('click', () => {
+    boosterAnyColor.addEventListener('click', (e) => {
+        e.preventDefault();
         if (gameState === gameStates.ready && !jokerTile.exists) {
             // {selected: true, column: 4, row: 3}
             jokerTile.exists = true;
@@ -1613,7 +1615,8 @@ window.onload = function () {
         }
     })
 
-    boosterBlowColor.addEventListener('click', () => {
+    boosterBlowColor.addEventListener('click', (e) => {
+        e.preventDefault();
         if (gameState === gameStates.ready) {
             // {selected: true, column: 4, row: 3}
             boostersCounter.color.used += 1;
@@ -1626,7 +1629,8 @@ window.onload = function () {
         }
     })
 
-    boosterBlowNearby.addEventListener('click', () => {
+    boosterBlowNearby.addEventListener('click', (e) => {
+        e.preventDefault();
         if (gameState === gameStates.ready) {
             // {selected: true, column: 4, row: 3}
             boostersCounter.nearby.used += 1;
@@ -1638,7 +1642,8 @@ window.onload = function () {
         }
     })
 
-    showMovesButton.addEventListener('click', () => {
+    showMovesButton.addEventListener('click', (e) => {
+        e.preventDefault();
         showMoves = !showMoves;
         updateMoves();
     })
@@ -1652,4 +1657,9 @@ window.onload = function () {
         aiBot = !aiBot;
         updateAiBot();
     })
+
+    // Disable double click on page
+    document.ondblclick = function (e) {
+        e.preventDefault();
+    }
 };

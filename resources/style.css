@@ -412,3 +412,7 @@ canvas {
     font-size: small;
     margin-top: 20px;
 }
+
+.header > *, .timer > *, .statistics > *, .boosters > *, .controllers > * {
+    pointer-events: none;
+}
