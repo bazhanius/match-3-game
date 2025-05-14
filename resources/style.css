@@ -295,11 +295,6 @@ canvas {
     overflow: visible;
 }
 
-.controllers-item__secondary {
-    border: none;
-    cursor: pointer;
-}
-
 .controllers-item__enabled {
     background-color: rgb(0, 119, 237);
     color: rgb(255, 255, 255);
@@ -408,11 +403,124 @@ canvas {
     }
 }
 
-#change-lang-button {
-    font-size: small;
-    margin-top: 20px;
-}
-
 .header > *, .timer > *, .statistics > *, .boosters > *, .controllers > * {
     pointer-events: none;
 }
+
+/* The Modal - https://www.w3schools.com/howto/howto_css_modals.asp */
+.faq-modal {
+    display: none;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    position: fixed; /* Stay in place */
+    z-index: 100; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0, 0, 0); /* Fallback color */
+    background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+}
+
+.faq-modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: small;
+    background-color: #fefefe;
+    padding: 16px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 480px;
+    height: 90%;
+    box-shadow: rgba(0, 0, 0, 0.5) 0 2px 12px 0;
+    box-sizing: border-box;
+}
+
+.faq-modal-close-button {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.faq-modal-close-button:hover,
+.faq-modal-close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Snackbar (toast) - https://www.w3schools.com/howto/howto_js_snackbar.asp*/
+#snackbar {
+    visibility: hidden; /* Hidden by default. Visible on click */
+    width: 90%; /* Set a default minimum width */
+    max-width: 450px;
+    background-color: rgb(66, 66, 67); /* Black background color */
+    color: #fff;
+    font-size: smaller;
+    font-weight: normal;
+    text-align: left; /* Centered text */
+    border-radius: 2px; /* Rounded borders */
+    padding: 12px; /* Padding */
+    position: fixed; /* Sit on top of the screen */
+    z-index: 100; /* Add a z-index if needed */
+    bottom: 16px; /* 30px from the bottom */
+    box-shadow: rgba(0, 0, 0, 0.5) 0 2px 12px 0;
+    box-sizing: border-box;
+}
+
+#snackbar.snackbar-show {
+    visibility: visible;
+    animation: snackbar-fadein 0.5s, snackbar-fadeout 0.5s 2.5s;
+}
+
+@-webkit-keyframes snackbar-fadein {
+    from {
+        bottom: 0;
+        opacity: 0;
+    }
+    to {
+        bottom: 16px;
+        opacity: 1;
+    }
+}
+
+@keyframes snackbar-fadeout {
+    from {
+        bottom: 16px;
+        opacity: 1;
+
+    }
+    to {
+        bottom: 0;
+        opacity: 0;
+    }
+}
+
+.footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    gap: 16px;
+    width: 100%;
+    overflow: visible;
+    margin-top: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgb(0, 119, 237);
+}
+
+.footer > div {
+    color: rgb(0, 119, 237);
+    cursor: pointer;
+}
+
+.

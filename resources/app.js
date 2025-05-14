@@ -39,6 +39,10 @@ const l10n = {
         "ru": "Усилители",
         "en": "Boosters"
     },
+    "chooseTileFirst": {
+        "ru": "ℹ️ Сначала выберите плитку",
+        "en": "ℹ️ First select the tile"
+    },
 }
 
 // The function gets called when the window is fully loaded
@@ -164,6 +168,10 @@ window.onload = function () {
     let newGameButton = document.getElementById('new-game-button');
     let autoPlayButton = document.getElementById("auto-play-button");
     let changeLangButton = document.getElementById("change-lang-button");
+    let faqModal = document.querySelector('.faq-modal')
+    let faqModalOpenButton = document.getElementById("faq-modal-button");
+    let faqModalCloseButton = document.querySelector('.faq-modal-close-button');
+    let snackbar = document.getElementById("snackbar");
     let showMovesButton = document.getElementById("show-move-button");
     let scoreCounter = document.querySelector('.score-counter');
     let bestScoreSpan = document.querySelector('.best-score > span');
@@ -259,7 +267,7 @@ window.onload = function () {
         any: {
             used: 0,
             total: 0,
-            score: 250
+            score: 2
         }
     };
 
@@ -1576,6 +1584,14 @@ window.onload = function () {
         newGame();
     })
 
+    function showSnackbar(text) {
+        snackbar.innerHTML = text;
+        snackbar.classList.add("snackbar-show");
+        setTimeout(() => {
+            snackbar.classList.remove("snackbar-show");
+        }, 3000);
+    }
+
     boosterShowMove.addEventListener('click', () => {
         if (gameState === gameStates.ready) {
             randomMove = moves[~~(Math.random() * moves.length)]
@@ -1592,7 +1608,7 @@ window.onload = function () {
 
     boosterAnyColor.addEventListener('click', (e) => {
         e.preventDefault();
-        if (gameState === gameStates.ready && !jokerTile.exists) {
+        if (gameState === gameStates.ready && !jokerTile.exists && level.selectedTile.selected) {
             // {selected: true, column: 4, row: 3}
             jokerTile.exists = true;
             boostersCounter.any.used += 1;
@@ -1612,12 +1628,14 @@ window.onload = function () {
                 animationTime = 0;
                 gameState = gameStates.resolve;
             }, 300)
+        } else {
+            showSnackbar(l10n.chooseTileFirst[userLang])
         }
     })
 
     boosterBlowColor.addEventListener('click', (e) => {
         e.preventDefault();
-        if (gameState === gameStates.ready) {
+        if (gameState === gameStates.ready && level.selectedTile.selected) {
             // {selected: true, column: 4, row: 3}
             boostersCounter.color.used += 1;
             let st = level.selectedTile;
@@ -1631,7 +1649,7 @@ window.onload = function () {
 
     boosterBlowNearby.addEventListener('click', (e) => {
         e.preventDefault();
-        if (gameState === gameStates.ready) {
+        if (gameState === gameStates.ready && level.selectedTile.selected) {
             // {selected: true, column: 4, row: 3}
             boostersCounter.nearby.used += 1;
             let st = level.selectedTile;
@@ -1657,6 +1675,23 @@ window.onload = function () {
         aiBot = !aiBot;
         updateAiBot();
     })
+
+    // FAQ modal
+    faqModalOpenButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        faqModal.style.display = "flex";
+    })
+    faqModalCloseButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        faqModal.style.display = "none";
+    })
+
+    window.onclick = function (event) {
+        event.preventDefault();
+        if (event.target === faqModal) {
+            faqModal.style.display = "none";
+        }
+    }
 
     // Disable double click on page
     document.ondblclick = function (e) {

@@ -7,7 +7,7 @@
 
     <!-- Favicon List -->
     <link rel="apple-touch-icon" sizes="180x180" href="/resources/favicons/apple-touch-icon.png">
-    <link rel="icon" type="image/x-icon" href="/resources/favicons/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/resources/favicons/favicon.ico"/>
     <link rel="icon" type="image/png" sizes="32x32" href="/resources/favicons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/resources/favicons/favicon-16x16.png">
     <link rel="icon" href="/resources/favicons/favicon.svg">
@@ -20,6 +20,30 @@
 <body>
 <div class="app">
     <div class="app-container">
+
+        <!-- Snackbar -->
+        <div id="snackbar">Some text some message..</div>
+
+        <!-- Modal content -->
+        <div class="faq-modal">
+            <div class="faq-modal-content">
+                <span class="faq-modal-close-button">х</span>
+                <h2>FAQ</h2>
+                <h3>Rules</h3>
+                <div>Place three or more tiles of the same color so that they are adjacent to each other vertically or horizontally.</div>
+                <div>The more tiles you connect, the more points you get. Points extend the timer, which is 2 minutes.</div>
+                <div>The game ends when there are no available moves left or the timer runs out.</div>
+
+                <h3>Boosters</h3>
+                <div>Click the "New Game" button to start a new game.</div>
+                <div>Click the "Find Move" button to highlight one random available move. The badge in the upper right corner shows the number of all possible moves at the moment.</div>
+                <div>Select a tile and click the "Delete Color" button to remove all tiles of the same color. For every 1000 points you will receive 1 booster.</div>
+                <div>Select a tile and click the "Delete Area" button to delete the selected tile and all tiles around it. For every 500 points you will receive 1 booster.</div>
+                <div>Select a tile and click the "Any Color" button to replace the selected tile with a "Joker Tile" that matches tiles of any color. For every 250 points you will receive 1 booster.</div>
+
+            </div>
+        </div>
+
         <div class="header">
             <div class="score-counter"></div>
 
@@ -80,7 +104,10 @@
             <div id="show-move-button" class="controllers-item" data-role="checkbox">Ходы</div>
         </div>
 
-        <div id="change-lang-button" class="controllers-item controllers-item__secondary">English</div>
+        <div class="footer">
+            <div id="change-lang-button">English</div>
+            <div id="faq-modal-button">FAQ</div>
+        </div>
     </div>
 </div>
 </body>
