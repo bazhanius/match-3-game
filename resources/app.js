@@ -641,6 +641,9 @@ window.onload = function () {
         // Render clusters
         renderClusters();
 
+        // Render new tiles
+        renderNewTiles();
+
         // Render moves, when there are no clusters
         if (showMoves && clusters.length <= 0 && gameState === gameStates.ready) {
             renderMoves();
@@ -678,13 +681,20 @@ window.onload = function () {
 
                 // Check if there is a tile present
                 if (level.tiles[i][j].type >= 0) {
-                    if (level.tiles[i][j].type === jokerTile.value) {
-                        drawTile(coord.tileX, coord.tileY, null, 'superTile');
-                    } else {
-                        // Get the color of the tile
+                    if (level.tiles[i][j].prevType === -1) {
                         let col = tileColors[level.tiles[i][j].type];
-                        // Draw the tile using the color
-                        drawTile(coord.tileX, coord.tileY, col, 'tile');
+                        drawTile(coord.tileX, coord.tileY, col, 'tile', 0);
+                        //delete level.tiles[i][j].prevType;
+                        //level.tiles[i][j].shift = 5;
+                    } else {
+                        if (level.tiles[i][j].type === jokerTile.value) {
+                            drawTile(coord.tileX, coord.tileY, null, 'superTile');
+                        } else {
+                            // Get the color of the tile
+                            let col = tileColors[level.tiles[i][j].type];
+                            // Draw the tile using the color
+                            drawTile(coord.tileX, coord.tileY, col, 'tile');
+                        }
                     }
                 } else {
                     // do smth with empty tiles:
@@ -736,6 +746,37 @@ window.onload = function () {
             }
         }
     }
+
+    // Render new tiles
+    function renderNewTiles() {
+
+        let distance = level.tileWidth * level.columns;
+        for (let i = 0; i < level.columns; i++) {
+            for (let j = 0; j < level.rows; j++) {
+                if (level.tiles[i][j].prevType === -1 && level.tiles[i][j].type >= 0 && gameState === gameStates.ready) {
+                    let coord = getTileCoordinate(i, j, 0, 0);
+                    let col = tileColors[level.tiles[i][j].type];
+
+                    let zoom = level.tiles[i][j]?.zoom || null;
+                    if (typeof zoom === 'undefined' || zoom === null || zoom === 'undefined') {
+                        level.tiles[i][j].zoom = 0.01;
+                    } else if (zoom < 1) {
+                        level.tiles[i][j].zoom += 0.05;
+                        let newY = coord.tileY - distance + easeOutBackWithFactor(level.tiles[i][j].zoom, 3.5) * distance;
+                        drawTile(coord.tileX, newY, col, 'tile', 1);
+                    } else if (zoom => 1) {
+                        delete level.tiles[i][j].prevType;
+                        delete level.tiles[i][j].zoom;
+                        drawTile(coord.tileX, coord.tileY, col, 'tile', 1);
+                    }
+                } else {
+                    delete level.tiles[i][j].prevType;
+                    delete level.tiles[i][j].zoom;
+                }
+            }
+        }
+    }
+
 
     // Get the tile coordinate
     function getTileCoordinate(column, row, columnOffset, rowOffset) {
@@ -836,11 +877,11 @@ window.onload = function () {
             context.save()
             context.beginPath();
             context.fillStyle = '#ccc';
-            context.roundRect(x + paddingZoomed + 9, y + paddingZoomed + 9, wZoomed - 16, wZoomed - 16, c.radii);
+            context.roundRect(x + paddingZoomed + 9, y + paddingZoomed + 9, wZoomed === 0 ? 0 : wZoomed - 16, wZoomed === 0 ? 0 : wZoomed - 16, c.radii);
             context.fill();
             context.beginPath();
             context.fillStyle = c.color;
-            context.roundRect(x + paddingZoomed + 7, y + paddingZoomed + 7, wZoomed - 16, wZoomed - 16, c.radii);
+            context.roundRect(x + paddingZoomed + 7, y + paddingZoomed + 7, wZoomed === 0 ? 0 : wZoomed - 16, wZoomed === 0 ? 0 : wZoomed - 16, c.radii);
             context.fill();
             context.restore();
         }
@@ -870,6 +911,16 @@ window.onload = function () {
         const c1 = 1.70158;
         const c3 = c1 + 1;
         let result = 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+        return result.toFixed(2);
+    }
+
+    function easeOutBackWithFactor(x, factor) {
+        const c1 = 1.70158;
+        const c3 = c1 + 1;
+        let result = 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+        if (result > 1) {
+            result = 1 + (result - 1) / factor;
+        }
         return result.toFixed(2);
     }
 
@@ -1061,6 +1112,12 @@ window.onload = function () {
             // Done when there is a valid move
             if (moves.length > 0) {
                 done = true;
+            }
+        }
+
+        for (let i = 0; i < level.columns; i++) {
+            for (let j = 0; j < level.rows; j++) {
+                delete level.tiles[i][j].prevType;
             }
         }
     }
@@ -1291,6 +1348,7 @@ window.onload = function () {
                 if (level.tiles[i][j].type === -1) {
                     // Insert new random tile
                     level.tiles[i][j].type = getRandomTile();
+                    level.tiles[i][j].prevType = -1;
                 } else {
                     // Swap tile to shift it
                     let shift = level.tiles[i][j].shift;
@@ -1341,6 +1399,10 @@ window.onload = function () {
         let typeSwap = level.tiles[x1][y1].type;
         level.tiles[x1][y1].type = level.tiles[x2][y2].type;
         level.tiles[x2][y2].type = typeSwap;
+
+        let prevTypeSwap = level.tiles[x1][y1].prevType;
+        level.tiles[x1][y1].prevType = level.tiles[x2][y2].prevType;
+        level.tiles[x2][y2].prevType = prevTypeSwap;
     }
 
     // Swap two tiles as a player action
@@ -1413,6 +1475,7 @@ window.onload = function () {
                     level.selectedTile.column = mt.x;
                     level.selectedTile.row = mt.y;
                     level.selectedTile.selected = true;
+                    //console.log(level.tiles[mt.x][mt.y]);
                 }
             } else {
                 // Invalid tile

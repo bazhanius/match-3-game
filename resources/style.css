@@ -180,6 +180,7 @@ h3 {
 
 .button:disabled {
     border: 2px solid rgb(204, 204, 204);
+    cursor: default;
 }
 
 .button:disabled > svg {
