@@ -28,7 +28,7 @@ const l10n = {
         "en": "Русский 🇷🇺"
     },
     "gameOverNoMovesLeft": {
-        "ru": "Конец игры. Ходы закончились",
+        "ru": "Конец игры. Ходы закончились.",
         "en": "Game over. No more moves left"
     },
     "gameOverTimeOut": {
@@ -47,6 +47,32 @@ const l10n = {
 
 // The function gets called when the window is fully loaded
 window.onload = function () {
+
+    // Detect user inactivity
+    let idle = {
+        timerID: null,
+        timeoutMs: 15000,
+        events: ['load, mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'touchmove', 'click'],
+        executeOnIdle() {
+            showRandomMove();
+        },
+        resetTimer() {
+            clearTimeout(idle.timerID);
+            idle.timerID = setTimeout(() => {
+                idle.executeOnIdle();
+            }, idle.timeoutMs);
+        },
+        start() {
+            this.events.forEach((name) => {
+                window.addEventListener(name, idle.resetTimer, false);
+            });
+        },
+        stop() {
+            this.events.forEach((name) => {
+                window.removeEventListener(name, idle.resetTimer, false);
+            });
+        }
+    }
 
     //------
     // Based on https://codepen.io/enxaneta/pen/yvPmLo
@@ -287,6 +313,10 @@ window.onload = function () {
     // Show available moves
     let showMoves = false;
     let randomMove = null;
+    let moveOffset = {
+        value: 0,
+        direction: 1,
+    };
 
     // The AI bot
     let aiBot = false;
@@ -907,6 +937,10 @@ window.onload = function () {
         }
     }
 
+    function easeInOutQuint(x) {
+        return x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2;
+    }
+
     function easeOutBack(x) {
         const c1 = 1.70158;
         const c3 = c1 + 1;
@@ -987,9 +1021,40 @@ window.onload = function () {
         }
     }
 
+
+    function easeInQuart(x) {
+        return x * x * x * x;
+    }
+
+    function easeInOutBack(x) {
+        const c1 = 1.70158;
+        const c2 = c1 * 1.525;
+
+        return x < 0.5
+            ? (Math.pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2
+            : (Math.pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2;
+    }
+
+    function easeInOutExpo(x) {
+        return x === 0
+            ? 0
+            : x === 1
+                ? 1
+                : x < 0.5 ? Math.pow(2, 20 * x - 10) / 2
+                    : (2 - Math.pow(2, -20 * x + 10)) / 2;
+    }
+
+    function easeInOutCirc(x) {
+        return x < 0.5
+            ? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2
+            : (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2;
+    }
+
+
     // Render moves
     function renderMoves() {
-        const draw = (coord1, coord2) => {
+        // Draw a line from tile 1 to tile 2
+        const drawLine = (coord1, coord2) => {
             // Draw a line from tile 1 to tile 2
             context.strokeStyle = selectColor.color;
             context.lineWidth = 3;
@@ -1006,16 +1071,99 @@ window.onload = function () {
             context.fill()
         }
 
+        // Draw an arrow from tile 1 to tile 2
+        const drawArrow = (coord1, coord2) => {
+            if (moveOffset.value >= 5) {
+                moveOffset.direction = -1;
+            } else if (moveOffset.value <= -5) {
+                moveOffset.direction = 1;
+            }
+            moveOffset.value += 0.4 * moveOffset.direction;
+            let moveOffsetEasing = easeInOutCirc(((moveOffset.value + 5) / 10)) * 10 - 5;
+
+            let x1, y1, x2, y2;
+
+            let isVertical = coord1.tileX === coord2.tileX;
+
+            if (isVertical) {
+                // vertical shift
+                x1 = coord1.tileX + level.tileWidth * 0.5;
+                y1 = coord1.tileY + level.tileHeight * 0.75;
+                x2 = coord2.tileX + level.tileWidth * 0.5;
+                y2 = coord2.tileY + level.tileHeight * 0.25;
+                y1 += moveOffsetEasing;
+                y2 += moveOffsetEasing;
+            } else {
+                // horizontal shift
+                x1 = coord1.tileX + level.tileWidth * 0.75;
+                y1 = coord1.tileY + level.tileHeight * 0.5;
+                x2 = coord2.tileX + level.tileWidth * 0.25;
+                y2 = coord2.tileY + level.tileHeight * 0.5;
+                x1 += moveOffsetEasing;
+                x2 += moveOffsetEasing;
+            }
+
+            context.lineCap = "round";
+
+            context.strokeStyle = 'white';
+            context.lineWidth = 16;
+            context.beginPath();
+            context.moveTo(x1, y1);
+            context.lineTo(x2, y2);
+            context.stroke();
+
+            if (isVertical) {
+                context.strokeStyle = 'white';
+                context.lineWidth = 16;
+                context.beginPath();
+                context.moveTo(x2 - level.tileWidth * 0.25, y2 - level.tileWidth * 0.25);
+                context.lineTo(x1, y1);
+                context.lineTo(x2 + level.tileWidth * 0.25, y2 - level.tileWidth * 0.25);
+                context.stroke();
+
+                context.strokeStyle = '#424243';
+                context.lineWidth = 10;
+                context.beginPath();
+                context.moveTo(x2 - level.tileWidth * 0.25, y2 - level.tileWidth * 0.25);
+                context.lineTo(x1, y1);
+                context.lineTo(x2 + level.tileWidth * 0.25, y2 - level.tileWidth * 0.25);
+                context.stroke();
+            } else {
+                context.strokeStyle = 'white';
+                context.lineWidth = 16;
+                context.beginPath();
+                context.moveTo(x2 - level.tileWidth * 0.25, y2 - level.tileWidth * 0.25);
+                context.lineTo(x2, y2);
+                context.lineTo(x2 - level.tileWidth * 0.25, y2 + level.tileWidth * 0.25);
+                context.stroke();
+
+                context.strokeStyle = '#424243';
+                context.lineWidth = 10;
+                context.beginPath();
+                context.moveTo(x2 - level.tileWidth * 0.25, y2 - level.tileWidth * 0.25);
+                context.lineTo(x2, y2);
+                context.lineTo(x2 - level.tileWidth * 0.25, y2 + level.tileWidth * 0.25);
+                context.stroke();
+            }
+
+            context.strokeStyle = '#424243';
+            context.lineWidth = 10;
+            context.beginPath();
+            context.moveTo(x1, y1);
+            context.lineTo(x2, y2);
+            context.stroke();
+        }
+
         if (randomMove) {
             let coord1 = getTileCoordinate(randomMove.column1, randomMove.row1, 0, 0);
             let coord2 = getTileCoordinate(randomMove.column2, randomMove.row2, 0, 0);
-            draw(coord1, coord2)
+            drawArrow(coord1, coord2)
         } else {
             for (let i = 0; i < moves.length; i++) {
                 // Calculate coordinates of tile 1 and 2
                 let coord1 = getTileCoordinate(moves[i].column1, moves[i].row1, 0, 0);
                 let coord2 = getTileCoordinate(moves[i].column2, moves[i].row2, 0, 0);
-                draw(coord1, coord2)
+                drawLine(coord1, coord2)
             }
         }
     }
@@ -1025,6 +1173,9 @@ window.onload = function () {
 
         // Reset game
         finishGame('');
+
+        // Remove pulse effect to New game button
+        newGameButton.classList.remove('pulse');
 
         // Get best score
         bestScoreSpan.innerHTML = localStorage.getItem('Match3GameBestScore') || '—';
@@ -1051,6 +1202,8 @@ window.onload = function () {
         // Find initial clusters and moves
         findMoves();
         findClusters();
+
+        idle.start();
     }
 
     // Finish game
@@ -1087,6 +1240,11 @@ window.onload = function () {
         boostersCounter.nearby.total = 0;
         boostersCounter.any.used = 0;
         boostersCounter.any.total = 0;
+
+        // Add pulse effect to New game button
+        newGameButton.classList.add('pulse');
+
+        idle.stop();
     }
 
     // Create a random level
@@ -1659,27 +1817,21 @@ window.onload = function () {
         newGame();
     })
 
-    function showSnackbar(text) {
-        if (!snackbar.classList.contains("snackbar-show")) {
-            snackbar.innerHTML = text;
-            snackbar.classList.add("snackbar-show");
-            setTimeout(() => {
-                snackbar.classList.remove("snackbar-show");
-            }, 3000);
-        }
+    function showRandomMove() {
+        randomMove = moves[~~(Math.random() * moves.length)]
+        showMoves = true;
+        boosterShowMove.setAttribute('disabled', 'disabled')
+        setTimeout(() => {
+            showMoves = false;
+            randomMove = null;
+            boosterShowMove.removeAttribute("disabled")
+        }, 5000)
+        updateMoves();
     }
 
     boosterShowMove.addEventListener('click', () => {
         if (gameState === gameStates.ready) {
-            randomMove = moves[~~(Math.random() * moves.length)]
-            showMoves = true;
-            boosterShowMove.setAttribute('disabled', 'disabled')
-            setTimeout(() => {
-                showMoves = false;
-                randomMove = null;
-                boosterShowMove.removeAttribute("disabled")
-            }, 5000)
-            updateMoves();
+            showRandomMove();
         }
     })
 
@@ -1757,6 +1909,17 @@ window.onload = function () {
         updateAiBot();
     })
 
+    // Snackbar (pop up notification)
+    function showSnackbar(text) {
+        if (!snackbar.classList.contains("snackbar-show")) {
+            snackbar.innerHTML = text;
+            snackbar.classList.add("snackbar-show");
+            setTimeout(() => {
+                snackbar.classList.remove("snackbar-show");
+            }, 3000);
+        }
+    }
+
     // FAQ modal
     faqModalOpenButton.addEventListener('click', (e) => {
         e.preventDefault();
@@ -1778,4 +1941,5 @@ window.onload = function () {
     document.ondblclick = function (e) {
         e.preventDefault();
     }
+
 };

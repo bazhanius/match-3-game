@@ -143,9 +143,9 @@ h3 {
         transform: scale(1, 1);
     }
     50% {
-        box-shadow: rgba(0, 0, 0, 0.2) 0 10px 16px 0, rgba(0, 0, 0, 0.19) 0 6px 20px 0;
+        box-shadow: rgba(0, 0, 0, 0.2) 0 10px 16px 0, rgba(0, 119, 237, 0.1) 0 6px 20px 0;
         opacity: 1;
-        transform: scale(1.01, 1.01);
+        transform: scale(1.02, 1.02);
     }
     100% {
         box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
