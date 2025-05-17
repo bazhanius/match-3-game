@@ -295,7 +295,7 @@ window.onload = function () {
         any: {
             used: 0,
             total: 0,
-            score: 2
+            score: 250
         }
     };
 
