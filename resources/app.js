@@ -295,7 +295,7 @@ window.onload = function () {
         any: {
             used: 0,
             total: 0,
-            score: 250
+            score: 2
         }
     };
 
@@ -1112,6 +1112,7 @@ window.onload = function () {
                 x2 += moveOffsetEasing;
             }
 
+            context.save();
             context.lineCap = "round";
 
             context.strokeStyle = 'white';
@@ -1161,6 +1162,7 @@ window.onload = function () {
             context.moveTo(x1, y1);
             context.lineTo(x2, y2);
             context.stroke();
+            context.restore();
         }
 
         if (randomMove) {
