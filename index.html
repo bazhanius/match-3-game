@@ -24,6 +24,7 @@
 
         <!-- Snackbar -->
         <div id="snackbar">Some text some message..</div>
+        <!-- /Snackbar -->
 
         <!-- Modal content -->
         <div class="faq-modal">
@@ -107,9 +108,12 @@
                 </div>
             </div>
         </div>
+        <!-- /Modal content -->
 
         <div class="header">
-            <div class="score-counter"></div>
+            <div class="score-counter-container">
+                <div class="score-counter"></div>
+            </div>
 
             <div class="new-game-button-container">
                 <button id="new-game-button" class="button">
@@ -127,11 +131,15 @@
                 <span>0</span>
             </div>
         </div>
+
         <div class="timer">
             <div class="timer_filler"></div>
         </div>
+
         <canvas id="viewport" width="650" height="650"></canvas>
+
         <div class="statistics"></div>
+
         <div class="boosters">
             <button id="booster-show-move" class="button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 -960 960 960"
@@ -186,6 +194,7 @@
                 <span data-lang="ru">Помощь</span>
             </div>
         </div>
+
     </div>
 </div>
 </body>

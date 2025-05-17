@@ -54,7 +54,7 @@ window.onload = function () {
         timeoutMs: 15000,
         events: ['load, mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'touchmove', 'click'],
         executeOnIdle() {
-            showRandomMove();
+            showOneMove('best');
         },
         resetTimer() {
             clearTimeout(idle.timerID);
@@ -925,14 +925,23 @@ window.onload = function () {
         }
         if (t === 'select') {
             context.save()
-            context.strokeStyle = c.color;
+
+            context.strokeStyle = '#ccc';
             context.setLineDash([level.tileWidth / 2, level.tileWidth / 2]);
-            context.beginPath();
             context.lineDashOffset = level.tileWidth * 0.25;
-            context.lineWidth = 5;
+            context.lineWidth = 6;
             context.lineCap = "square";
+
+            context.beginPath();
+            context.strokeRect(x + 2, y + 2, level.tileWidth, level.tileHeight);
+            context.stroke();
+
+            context.lineWidth = 6;
+            context.strokeStyle = '#424243';
+            context.beginPath();
             context.strokeRect(x, y, level.tileWidth, level.tileHeight);
             context.stroke();
+
             context.restore();
         }
     }
@@ -1176,6 +1185,7 @@ window.onload = function () {
 
         // Remove pulse effect to New game button
         newGameButton.classList.remove('pulse');
+        newGameButton.querySelector('svg').innerHTML = '<path d="M440-122q-121-15-200.5-105.5T160-440q0-66 26-126.5T260-672l57 57q-38 34-57.5 79T240-440q0 88 56 155.5T440-202v80Zm80 0v-80q87-16 143.5-83T720-440q0-100-70-170t-170-70h-3l44 44-56 56-140-140 140-140 56 56-44 44h3q134 0 227 93t93 227q0 121-79.5 211.5T520-122Z"/>';
 
         // Get best score
         bestScoreSpan.innerHTML = localStorage.getItem('Match3GameBestScore') || '—';
@@ -1243,6 +1253,7 @@ window.onload = function () {
 
         // Add pulse effect to New game button
         newGameButton.classList.add('pulse');
+        newGameButton.querySelector('svg').innerHTML = '<path d="M320-200v-560l440 280-440 280Zm80-280Zm0 134 210-134-210-134v268Z"/>';
 
         idle.stop();
     }
@@ -1428,7 +1439,7 @@ window.onload = function () {
                 // Check if the swap made a cluster
                 if (clusters.length > 0) {
                     // Found a move
-                    moves.push({column1: i, row1: j, column2: i + 1, row2: j});
+                    moves.push({column1: i, row1: j, column2: i + 1, row2: j, match: clusters[0].length});
                 }
             }
         }
@@ -1444,7 +1455,7 @@ window.onload = function () {
                 // Check if the swap made a cluster
                 if (clusters.length > 0) {
                     // Found a move
-                    moves.push({column1: i, row1: j, column2: i, row2: j + 1});
+                    moves.push({column1: i, row1: j, column2: i, row2: j + 1, match: clusters[0].length});
                 }
             }
         }
@@ -1817,8 +1828,15 @@ window.onload = function () {
         newGame();
     })
 
-    function showRandomMove() {
-        randomMove = moves[~~(Math.random() * moves.length)]
+    function showOneMove(type = null) {
+        // Show best on idle or if less than 50% of time left
+        if (type === 'best' || timer.current / timer.start < 0.5) {
+            // Sort moves by match count
+            moves.sort((a, b) => Number(b.match) - Number(a.match));
+            randomMove = moves[0];
+        } else { // Show random move
+            randomMove = moves[~~(Math.random() * moves.length)]
+        }
         showMoves = true;
         boosterShowMove.setAttribute('disabled', 'disabled')
         setTimeout(() => {
@@ -1831,7 +1849,7 @@ window.onload = function () {
 
     boosterShowMove.addEventListener('click', () => {
         if (gameState === gameStates.ready) {
-            showRandomMove();
+            showOneMove();
         }
     })
 

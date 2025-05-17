@@ -102,7 +102,7 @@ h3 {
     overflow: visible;
 }
 
-.score-counter, .best-score, .new-game-button-container {
+.score-counter-container, .score-counter, .best-score, .new-game-button-container {
     display: flex;
     flex-direction: row;
     justify-content: center;
