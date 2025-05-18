@@ -68,6 +68,7 @@ window.onload = function () {
             });
         },
         stop() {
+            clearTimeout(idle.timerID);
             this.events.forEach((name) => {
                 window.removeEventListener(name, idle.resetTimer, false);
             });
@@ -300,8 +301,8 @@ window.onload = function () {
     };
 
     let timer = {
-        start: 120,
-        current: 120,
+        start: 10,
+        current: 10,
         intervalId: null
     }
 
@@ -1194,6 +1195,7 @@ window.onload = function () {
 
         // Start timer
         startTimer();
+        idle.start();
         boosterShowMove.removeAttribute('disabled');
 
         // Reset score
@@ -1214,8 +1216,6 @@ window.onload = function () {
         // Find initial clusters and moves
         findMoves();
         findClusters();
-
-        idle.start();
     }
 
     // Finish game
@@ -1223,13 +1223,14 @@ window.onload = function () {
         gameOver.status = true;
         gameOver.reason = reason;
 
+        idle.stop();
+        endTimer();
+
         // Save score if new record
         let bestScore = localStorage.getItem('Match3GameBestScore') || 0;
         if (score.current > bestScore) {
             localStorage.setItem('Match3GameBestScore', score.current);
         }
-
-        endTimer();
 
         // Reset boosters button and counters
         boosterShowMove.setAttribute('disabled', 'disabled');
@@ -1257,7 +1258,7 @@ window.onload = function () {
         newGameButton.classList.add('pulse');
         newGameButton.querySelector('svg').innerHTML = '<path d="M320-200v-560l440 280-440 280Zm80-280Zm0 134 210-134-210-134v268Z"/>';
 
-        idle.stop();
+
     }
 
     // Create a random level
