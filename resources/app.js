@@ -301,8 +301,8 @@ window.onload = function () {
     };
 
     let timer = {
-        start: 10,
-        current: 10,
+        start: 120,
+        current: 120,
         intervalId: null
     }
 
