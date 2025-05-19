@@ -310,7 +310,7 @@ window.onload = function () {
     // Animation variables
     let animationState = 0;
     let animationTime = 0;
-    let animationTimeTotal = 0.4;
+    let animationTimeTotal = 0.3;
 
     // Show available moves
     let showMoves = false;
