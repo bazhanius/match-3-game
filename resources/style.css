@@ -175,7 +175,12 @@ h3 {
 }
 
 .button:active {
-    background-color: rgba(0, 119, 237, .1);
+    background-color: rgba(255, 78, 64, .06);
+    border: 2px solid rgb(255, 78, 64);
+}
+
+.button:active > svg {
+    fill: rgb(255, 78, 64);
 }
 
 .button:disabled {
@@ -282,10 +287,56 @@ h3 {
     }
 }
 
-canvas {
+.game-field {
     border: 2px solid #ccc;
     border-radius: 6px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
 }
+
+canvas {
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.game-field-overlay {
+    position: absolute;
+    display: flex;
+    gap: 12px;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    z-index: 2;
+    /*background-color: white;*/
+    padding: 12px;
+    /*border-radius: 6px;
+    border: 2px solid #cccccc;*/
+}
+
+.game-field-overlay span {
+    fill: white;
+    color: white;
+    text-shadow: 1px 1px 3px #000;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.times-up, .no-moves {
+    display: none;
+}
+
+.overlay-times-up > .times-up {
+    display: block;
+}
+.overlay-no-moves > .no-moves {
+    display: block;
+}
+
 
 .controllers {
     width: 100%;
@@ -396,7 +447,7 @@ canvas {
 }
 
 @media (orientation: landscape) {
-    .app-container, .app-container > canvas {
+    .app-container, .app-container > .game-field {
         width: 480px;
     }
 
@@ -411,7 +462,7 @@ canvas {
 }
 
 @media (orientation: portrait) {
-    .app-container, .app-container > canvas {
+    .app-container, .app-container > .game-field {
         width: 100%;
     }
 

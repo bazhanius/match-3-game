@@ -204,6 +204,7 @@ window.onload = function () {
     let showMovesButton = document.getElementById("show-move-button");
     let scoreCounter = document.querySelector('.score-counter');
     let bestScoreSpan = document.querySelector('.best-score > span');
+    let gameFieldOverlay = document.querySelector('.game-field-overlay');
 
     // Boosters
     let boosterShowMove = document.getElementById('booster-show-move');
@@ -309,7 +310,7 @@ window.onload = function () {
     // Animation variables
     let animationState = 0;
     let animationTime = 0;
-    let animationTimeTotal = 0.3;
+    let animationTimeTotal = 0.4;
 
     // Show available moves
     let showMoves = false;
@@ -688,6 +689,7 @@ window.onload = function () {
         if (gameOver.status) {
             context.fillStyle = "rgba(0, 0, 0, 0.8)";
             context.fillRect(level.x, level.y, levelWidth, levelHeight);
+            /*
             context.fillStyle = "#ffffff";
             context.font = "24px Verdana";
             drawCenterText(
@@ -697,6 +699,8 @@ window.onload = function () {
                 level.x,
                 level.y + levelHeight / 2 + 10,
                 levelWidth);
+
+             */
         }
     }
 
@@ -1188,8 +1192,7 @@ window.onload = function () {
 
         // Remove pulse effect to New game button
         newGameButton.classList.remove('pulse');
-        newGameButton.querySelector('svg').innerHTML = '<path d="M440-122q-121-15-200.5-105.5T160-440q0-66 26-126.5T260-672l57 57q-38 34-57.5 79T240-440q0 88 56 155.5T440-202v80Zm80 0v-80q87-16 143.5-83T720-440q0-100-70-170t-170-70h-3l44 44-56 56-140-140 140-140 56 56-44 44h3q134 0 227 93t93 227q0 121-79.5 211.5T520-122Z"/>';
-
+        newGameButton.querySelector('svg').innerHTML = '<path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"/>';
         // Get best score
         bestScoreSpan.innerHTML = localStorage.getItem('Match3GameBestScore') || '—';
 
@@ -1258,6 +1261,14 @@ window.onload = function () {
         newGameButton.classList.add('pulse');
         newGameButton.querySelector('svg').innerHTML = '<path d="M320-200v-560l440 280-440 280Zm80-280Zm0 134 210-134-210-134v268Z"/>';
 
+        if (reason === 'timeOut') {
+            gameFieldOverlay.classList.add('overlay-times-up');
+        } else if (reason === 'noMoveLeft') {
+            gameFieldOverlay.classList.add('overlay-no-moves');
+        } else {
+            gameFieldOverlay.classList.remove('overlay-times-up');
+            gameFieldOverlay.classList.remove('overlay-no-moves');
+        }
 
     }
 
