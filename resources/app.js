@@ -1843,8 +1843,8 @@ window.onload = function () {
     })
 
     function showOneMove(type = null) {
-        // Show best on idle or if less than 50% of time left
-        if (type === 'best' || timer.current / timer.start < 0.5) {
+        // Show best move on idle or if less than 50% of time left or if less than 6 possible moves left
+        if (type === 'best' || timer.current / timer.start < 0.5 || moves.length < 6) {
             // Sort moves by match count
             moves.sort((a, b) => Number(b.match) - Number(a.match));
             randomMove = moves[0];
