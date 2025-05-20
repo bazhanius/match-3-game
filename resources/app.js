@@ -1963,7 +1963,7 @@ window.onload = function () {
     })
 
     window.onclick = function (event) {
-        event.preventDefault();
+        //event.preventDefault();
         if (event.target === faqModal) {
             faqModal.style.display = "none";
         }
