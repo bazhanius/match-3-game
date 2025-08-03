@@ -1753,7 +1753,7 @@ window.onload = function () {
                 if (timer.current <= 0) {
                     finishGame('timeOut');
                 }
-                timer.current -= 1;
+                timer.current -= 1 + (score.current / 3000);
             }, 1000);
         }
     }
