@@ -1495,6 +1495,14 @@ window.onload = function () {
                     rowOffset++;
                 }
             }
+            // Sound for cluster matches
+            if (cluster.length == 3) {
+            soundcluster3.play();	
+            } else if (cluster.length == 4) {
+            soundcluster4.play();
+            } else if (cluster.length == 5) {
+            soundcluster5.play();
+            }
         }
     }
 
