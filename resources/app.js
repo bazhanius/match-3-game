@@ -43,10 +43,157 @@ const l10n = {
         "ru": "Сначала выберите плитку",
         "en": "First select the tile"
     },
+    "gamePaused": {
+        "ru": "Игра приостановлена",
+        "en": "Game paused"
+    }
 }
 
 // The function gets called when the window is fully loaded
 window.onload = function () {
+
+    let newGameButton = document.getElementById('new-game-button');
+    let autoPlayButton = document.getElementById("auto-play-button");
+    let changeLangButton = document.getElementById("change-lang-button");
+    let ruLangItems = document.querySelectorAll('[data-lang="ru"]');
+    let enLangItems = document.querySelectorAll('[data-lang="en"]');
+    let faqModal = document.querySelector('.faq-modal')
+    let faqModalOpenButton = document.getElementById("faq-modal-button");
+    let faqModalCloseButton = document.querySelector('.faq-modal-close-button');
+    let snackbar = document.getElementById("snackbar");
+    let showMovesButton = document.getElementById("show-move-button");
+    let scoreCounter = document.querySelector('.score-counter');
+    let bestScoreSpan = document.querySelector('.best-score > span');
+    let gameFieldOverlay = document.querySelector('.game-field-overlay');
+
+    // Boosters
+    let boosterShowMove = document.getElementById('booster-show-move');
+    let boosterShowMoveBadge = document.querySelector('#booster-show-move .button-badge');
+
+    let boosterBlowColor = document.getElementById('booster-blow-color');
+    let boosterBlowColorBadge = document.querySelector('#booster-blow-color .button-badge');
+
+    let boosterBlowNearby = document.getElementById('booster-blow-nearby');
+    let boosterBlowNearbyBadge = document.querySelector('#booster-blow-nearby .button-badge');
+
+    let boosterAnyColor = document.getElementById('booster-any-color');
+    let boosterAnyColorBadge = document.querySelector('#booster-any-color .button-badge');
+
+    let statistics = document.querySelector('.statistics');
+    let timerFiller = document.querySelector('.timer_filler');
+
+    // Get the canvas and context
+    let canvas = document.getElementById("viewport");
+    let context = canvas.getContext("2d");
+
+    // Timing and frames per second
+    let lastFrame = 0;
+    let fpsTime = 0;
+    let frameCount = 0;
+    let fps = 0;
+
+    // Mouse dragging
+    let drag = false;
+
+    // Level object
+    let level = {
+        x: 5,         // X position
+        y: 5,         // Y position
+        columns: 8,     // Number of tile columns
+        rows: 8,        // Number of tile rows
+        tileWidth: 80,  // Visual width of a tile
+        tileHeight: 80, // Visual height of a tile
+        tiles: [],      // The two-dimensional tile array
+        selectedTile: {selected: false, column: 0, row: 0}
+    };
+
+    // All the different tile colors in RGB
+    let tileColors = [
+        {color: "#FF4E40", radii: [0, 36, 36, 36]},
+        {color: "#BF61D6", radii: [36, 0, 36, 36]},
+        {color: "#139DF5", radii: [36, 36, 0, 36]},
+        {color: "#4ECC2C", radii: [36, 36, 36, 0]},
+        {color: "#FED204", radii: [36, 0, 36, 0]},
+        {color: "#FDA811", radii: [36, 36, 36, 36]},
+        //{color: "#AEADAB", radii: [18, 18, 18, 18]}
+    ];
+    let bgColor = {color: "rgb(245, 245, 247)", radii: [0, 0, 0, 0]}
+    let selectColor = {color: "rgb(0, 119, 237)", radii: [0, 0, 0, 0]}
+    let jokerTile = {
+        value: 777,
+        exists: false,
+    };
+
+    // Clusters and moves that were found
+    let clusters = [];  // { column, row, length, horizontal }
+    let moves = [];     // { column1, row1, column2, row2 }
+
+    // Current move
+    let currentMove = {column1: 0, row1: 0, column2: 0, row2: 0};
+
+    // Game states
+    let gameStates = {init: 0, ready: 1, resolve: 2};
+    let gameState = gameStates.init;
+
+    // Score
+    let score = {
+        previous: 0,
+        current: 0
+    };
+
+    let statsCounter = {};
+
+    let boostersCounter = {
+        color: {
+            used: 0,
+            total: 0,
+            score: 1000
+        },
+        nearby: {
+            used: 0,
+            total: 0,
+            score: 500
+        },
+        any: {
+            used: 0,
+            total: 0,
+            score: 250
+        }
+    };
+
+    let timer = {
+        start: 120,
+        current: 120,
+        intervalId: null
+    };
+
+    // Animation variables
+    let animationState = 0;
+    let animationTime = 0;
+    let animationTimeTotal = 0.3;
+
+    // Show available moves
+    let showMoves = false;
+    let randomMove = null;
+    let moveOffset = {
+        value: 0,
+        direction: 1,
+    };
+
+    // The AI bot
+    let aiBot = false;
+
+    // Game Over
+    let gameOver = {
+        status: false,
+        reason: null,
+    };
+
+    let isPaused = false;
+
+    const clickType = (('ontouchstart' in window) || (navigator.MaxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
+        ? 'touch'
+        : 'click';
 
     // Detect user inactivity
     let idle = {
@@ -54,6 +201,7 @@ window.onload = function () {
         timeoutMs: 15000,
         events: ['load, mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'touchmove', 'click'],
         executeOnIdle() {
+            if (isPaused) return;
             showOneMove('best');
         },
         resetTimer() {
@@ -189,150 +337,7 @@ window.onload = function () {
         }
     }
 
-
     //------
-
-    let newGameButton = document.getElementById('new-game-button');
-    let autoPlayButton = document.getElementById("auto-play-button");
-    let changeLangButton = document.getElementById("change-lang-button");
-    let ruLangItems = document.querySelectorAll('[data-lang="ru"]');
-    let enLangItems = document.querySelectorAll('[data-lang="en"]');
-    let faqModal = document.querySelector('.faq-modal')
-    let faqModalOpenButton = document.getElementById("faq-modal-button");
-    let faqModalCloseButton = document.querySelector('.faq-modal-close-button');
-    let snackbar = document.getElementById("snackbar");
-    let showMovesButton = document.getElementById("show-move-button");
-    let scoreCounter = document.querySelector('.score-counter');
-    let bestScoreSpan = document.querySelector('.best-score > span');
-    let gameFieldOverlay = document.querySelector('.game-field-overlay');
-
-    // Boosters
-    let boosterShowMove = document.getElementById('booster-show-move');
-    let boosterShowMoveBadge = document.querySelector('#booster-show-move .button-badge');
-
-    let boosterBlowColor = document.getElementById('booster-blow-color');
-    let boosterBlowColorBadge = document.querySelector('#booster-blow-color .button-badge');
-
-    let boosterBlowNearby = document.getElementById('booster-blow-nearby');
-    let boosterBlowNearbyBadge = document.querySelector('#booster-blow-nearby .button-badge');
-
-    let boosterAnyColor = document.getElementById('booster-any-color');
-    let boosterAnyColorBadge = document.querySelector('#booster-any-color .button-badge');
-
-    let statistics = document.querySelector('.statistics');
-    let timerFiller = document.querySelector('.timer_filler');
-
-    // Get the canvas and context
-    let canvas = document.getElementById("viewport");
-    let context = canvas.getContext("2d");
-
-    // Timing and frames per second
-    let lastFrame = 0;
-    let fpsTime = 0;
-    let frameCount = 0;
-    let fps = 0;
-
-    // Mouse dragging
-    let drag = false;
-
-    // Level object
-    let level = {
-        x: 5,         // X position
-        y: 5,         // Y position
-        columns: 8,     // Number of tile columns
-        rows: 8,        // Number of tile rows
-        tileWidth: 80,  // Visual width of a tile
-        tileHeight: 80, // Visual height of a tile
-        tiles: [],      // The two-dimensional tile array
-        selectedTile: {selected: false, column: 0, row: 0}
-    };
-
-    // All the different tile colors in RGB
-    let tileColors = [
-        {color: "#FF4E40", radii: [0, 36, 36, 36]},
-        {color: "#BF61D6", radii: [36, 0, 36, 36]},
-        {color: "#139DF5", radii: [36, 36, 0, 36]},
-        {color: "#4ECC2C", radii: [36, 36, 36, 0]},
-        {color: "#FED204", radii: [36, 0, 36, 0]},
-        {color: "#FDA811", radii: [36, 36, 36, 36]},
-        //{color: "#AEADAB", radii: [18, 18, 18, 18]}
-    ]
-    let bgColor = {color: "rgb(245, 245, 247)", radii: [0, 0, 0, 0]}
-    let selectColor = {color: "rgb(0, 119, 237)", radii: [0, 0, 0, 0]}
-    let jokerTile = {
-        value: 777,
-        exists: false,
-    }
-
-    // Clusters and moves that were found
-    let clusters = [];  // { column, row, length, horizontal }
-    let moves = [];     // { column1, row1, column2, row2 }
-
-    // Current move
-    let currentMove = {column1: 0, row1: 0, column2: 0, row2: 0};
-
-    // Game states
-    let gameStates = {init: 0, ready: 1, resolve: 2};
-    let gameState = gameStates.init;
-
-    // Score
-    let score = {
-        previous: 0,
-        current: 0
-    };
-
-    let statsCounter = {};
-
-    let boostersCounter = {
-        color: {
-            used: 0,
-            total: 0,
-            score: 1000
-        },
-        nearby: {
-            used: 0,
-            total: 0,
-            score: 500
-        },
-        any: {
-            used: 0,
-            total: 0,
-            score: 250
-        }
-    };
-
-    let timer = {
-        start: 120,
-        current: 120,
-        intervalId: null
-    }
-
-    // Animation variables
-    let animationState = 0;
-    let animationTime = 0;
-    let animationTimeTotal = 0.3;
-
-    // Show available moves
-    let showMoves = false;
-    let randomMove = null;
-    let moveOffset = {
-        value: 0,
-        direction: 1,
-    };
-
-    // The AI bot
-    let aiBot = false;
-
-    // Game Over
-    let gameOver = {
-        status: false,
-        reason: null,
-    };
-
-
-    const clickType = (('ontouchstart' in window) || (navigator.MaxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
-        ? 'touch'
-        : 'click';
 
     // Initialize the game
     function init() {
@@ -369,11 +374,9 @@ window.onload = function () {
     function main(tframe) {
         // Request animation frames
         window.requestAnimationFrame(main);
-
         // Update and render the game
         update(tframe);
         render();
-
         if (particles.length > 0) {
             drawExplosion();
         }
@@ -381,6 +384,8 @@ window.onload = function () {
 
     // Update the game state
     function update(tframe) {
+        if (isPaused) return;
+
         let dt = (tframe - lastFrame) / 1000;
         lastFrame = tframe;
 
@@ -574,7 +579,6 @@ window.onload = function () {
             boosterAnyColorBadge.innerHTML = "" + anyDiff;
         } else {
             document.body.style.setProperty("--any-color-badge-display", "none")
-            //document.body.style.setProperty("--any-color-bg-height", `0%`)
             boosterAnyColor.setAttribute('disabled', 'disabled');
             boosterAnyColorBadge.innerHTML = "";
         }
@@ -685,23 +689,6 @@ window.onload = function () {
             showMoves = false;
         }
 
-        // Game Over overlay
-        if (gameOver.status) {
-            context.fillStyle = "rgba(0, 0, 0, 0.8)";
-            context.fillRect(level.x, level.y, levelWidth, levelHeight);
-            /*
-            context.fillStyle = "#ffffff";
-            context.font = "24px Verdana";
-            drawCenterText(
-                gameOver.reason === 'timeOut'
-                    ? l10n.gameOverTimeOut[userLang]
-                    : l10n.gameOverNoMovesLeft[userLang],
-                level.x,
-                level.y + levelHeight / 2 + 10,
-                levelWidth);
-
-             */
-        }
     }
 
     // Render tiles
@@ -719,8 +706,6 @@ window.onload = function () {
                     if (level.tiles[i][j].prevType === -1) {
                         let col = tileColors[level.tiles[i][j].type];
                         drawTile(coord.tileX, coord.tileY, col, 'tile', 0);
-                        //delete level.tiles[i][j].prevType;
-                        //level.tiles[i][j].shift = 5;
                     } else {
                         if (level.tiles[i][j].type === jokerTile.value) {
                             drawTile(coord.tileX, coord.tileY, null, 'superTile');
@@ -731,9 +716,6 @@ window.onload = function () {
                             drawTile(coord.tileX, coord.tileY, col, 'tile');
                         }
                     }
-                } else {
-                    // do smth with empty tiles:
-                    // coord.tileX + level.tileWidth / 2, coord.tileY + level.tileWidth / 2));
                 }
 
                 // Draw the selected tile
@@ -763,7 +745,6 @@ window.onload = function () {
             let coord2shift = getTileCoordinate(currentMove.column2, currentMove.row2, easeOutBack(animationTime / animationTimeTotal) * -shiftX, easeOutBack(animationTime / animationTimeTotal) * -shiftY);
             let col2 = tileColors[level.tiles[currentMove.column2][currentMove.row2].type];
             let col2DrawType = level.tiles[currentMove.column2][currentMove.row2].type === jokerTile.value ? 'superTile' : 'tile';
-
 
             // Draw background
             drawTile(coord1.tileX, coord1.tileY, bgColor, 'tileBg');
@@ -1262,10 +1243,13 @@ window.onload = function () {
         newGameButton.querySelector('svg').innerHTML = '<path d="M320-200v-560l440 280-440 280Zm80-280Zm0 134 210-134-210-134v268Z"/>';
 
         if (reason === 'timeOut') {
+            gameFieldOverlay.style.display = 'flex';
             gameFieldOverlay.classList.add('overlay-times-up');
         } else if (reason === 'noMoveLeft') {
+            gameFieldOverlay.style.display = 'flex';
             gameFieldOverlay.classList.add('overlay-no-moves');
         } else {
+            gameFieldOverlay.style.display = 'none';
             gameFieldOverlay.classList.remove('overlay-times-up');
             gameFieldOverlay.classList.remove('overlay-no-moves');
         }
@@ -1747,7 +1731,8 @@ window.onload = function () {
         timerFiller.style.backgroundColor = getCompletionPercentageColor(1);
         if (!timer.intervalId) {
             timer.intervalId = setInterval(() => {
-                let percent = (100 * timer.current / timer.start).toFixed(0);
+                if (isPaused) return;
+                let percent = 100 * (timer.current <= 0 ? 0 : timer.current) / timer.start;
                 timerFiller.style.width = `${percent}%`;
                 timerFiller.style.backgroundColor = getCompletionPercentageColor(100 - percent);
                 if (timer.current <= 0) {
@@ -1832,7 +1817,7 @@ window.onload = function () {
             animationState = 1;
             animationTime = 0;
             gameState = gameStates.resolve;
-        }, 500)
+        }, 500);
     }
 
     newGameButton.addEventListener('click', () => {
@@ -1840,7 +1825,7 @@ window.onload = function () {
         aiBot = false;
         updateAiBot();
         newGame();
-    })
+    });
 
     function showOneMove(type = null) {
         // Show best move on idle or if less than 50% of time left or if less than 6 possible moves left
@@ -1857,7 +1842,7 @@ window.onload = function () {
             showMoves = false;
             randomMove = null;
             boosterShowMove.removeAttribute("disabled")
-        }, 5000)
+        }, 5000);
         updateMoves();
     }
 
@@ -1890,9 +1875,9 @@ window.onload = function () {
                 gameState = gameStates.resolve;
             }, 300)
         } else {
-            showSnackbar(l10n.chooseTileFirst[userLang])
+            showSnackbar(l10n.chooseTileFirst[userLang]);
         }
-    })
+    });
 
     boosterBlowColor.addEventListener('click', (e) => {
         e.preventDefault();
@@ -1908,7 +1893,7 @@ window.onload = function () {
         } else {
             showSnackbar(l10n.chooseTileFirst[userLang])
         }
-    })
+    });
 
     boosterBlowNearby.addEventListener('click', (e) => {
         e.preventDefault();
@@ -1923,23 +1908,23 @@ window.onload = function () {
         } else {
             showSnackbar(l10n.chooseTileFirst[userLang])
         }
-    })
+    });
 
     showMovesButton.addEventListener('click', (e) => {
         e.preventDefault();
         showMoves = !showMoves;
         updateMoves();
-    })
+    });
 
     changeLangButton.addEventListener('click', () => {
         userLang = userLang === 'ru' ? 'en' : 'ru';
         updateTranslate();
-    })
+    });
 
     autoPlayButton.addEventListener('click', () => {
         aiBot = !aiBot;
         updateAiBot();
-    })
+    });
 
     // Snackbar (pop up notification)
     function showSnackbar(text) {
@@ -1955,23 +1940,26 @@ window.onload = function () {
     // FAQ modal
     faqModalOpenButton.addEventListener('click', (e) => {
         e.preventDefault();
+        isPaused = true;
         faqModal.style.display = "flex";
-    })
+        showSnackbar(l10n.gamePaused[userLang]);
+    });
     faqModalCloseButton.addEventListener('click', (e) => {
         e.preventDefault();
+        isPaused = false;
         faqModal.style.display = "none";
-    })
+    });
 
     window.onclick = function (event) {
         //event.preventDefault();
         if (event.target === faqModal) {
             faqModal.style.display = "none";
         }
-    }
+    };
 
     // Disable double click on page
     document.ondblclick = function (e) {
         e.preventDefault();
-    }
+    };
 
 };
